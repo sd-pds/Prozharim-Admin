@@ -16,8 +16,8 @@
       </div>
 
       <div class="authBox">
-        <label>Worker API URL</label>
-        <input id="apiBase" placeholder="https://your-worker.workers.dev" />
+        <label>Worker API</label>
+        <div class="authHint" id="apiBaseLabel">https://prozharim-oreder-api.polihov-alexey-a.workers.dev</div>
         <label>ADMIN_TOKEN</label>
         <input id="adminToken" type="password" placeholder="Введите токен" />
         <button class="btn btn--primary w100" id="saveAuthBtn">Подключить</button>
@@ -60,9 +60,9 @@
             </select>
             <select id="orderSiteFilter">
               <option value="">Все сайты</option>
-              <option value="ПРОЖАРИМ">ПРОЖАРИМ</option>
-              <option value="СУШИДЗА">СУШИДЗА</option>
-              <option value="БАНЗАЙ">БАНЗАЙ</option>
+              <option value="prozharim">ПРОЖАРИМ</option>
+              <option value="sushidza">СУШИДЗА</option>
+              <option value="banzai">БАНЗАЙ</option>
             </select>
           </div>
 
@@ -196,7 +196,7 @@
           <h3>GitHub</h3>
           <p>GH_OWNER — владелец репозитория, GH_REPO — имя репозитория основного сайта, GH_BRANCH — обычно main. Токену GitHub нужны права на contents: read/write.</p>
           <h3>Админка</h3>
-          <p>Залей этот архив в отдельный репозиторий GitHub Pages, открой сайт на отдельном домене, введи URL Worker и ADMIN_TOKEN в боковой панели. Данные сохраняются через Worker прямо в GitHub и KV.</p>
+          <p>Залей этот архив в отдельный репозиторий GitHub Pages, открой сайт на отдельном домене, введи только ADMIN_TOKEN в боковой панели. Данные сохраняются через Worker прямо в GitHub и KV.</p>
         </div>
       </section>
     </main>

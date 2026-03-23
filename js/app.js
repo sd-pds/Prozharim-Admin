@@ -1,5 +1,9 @@
+const DEFAULT_API_BASE = 'https://prozharim-oreder-api.polihov-alexey-a.workers.dev';
+const ORDERS_REFRESH_MS = 10000;
+const STATS_REFRESH_MS = 60000;
+
 const state = {
-  apiBase: localStorage.getItem('proz_admin_api_base') || '',
+  apiBase: DEFAULT_API_BASE,
   adminToken: localStorage.getItem('proz_admin_token') || '',
   menu: [],
   currentMenuIndex: -1,
@@ -15,6 +19,7 @@ const state = {
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
+const SITE_LABELS = { prozharim: 'ПРОЖАРИМ', sushidza: 'СУШИДЗА', banzai: 'БАНЗАЙ' };
 
 function showToast(message) {
   const el = $('#toast');
@@ -25,15 +30,17 @@ function showToast(message) {
 }
 
 function saveAuth() {
-  state.apiBase = $('#apiBase').value.trim().replace(/\/$/, '');
+  state.apiBase = DEFAULT_API_BASE;
   state.adminToken = $('#adminToken').value.trim();
-  localStorage.setItem('proz_admin_api_base', state.apiBase);
   localStorage.setItem('proz_admin_token', state.adminToken);
+  $('#apiBaseLabel').textContent = state.apiBase;
   showToast('Подключение сохранено');
+  startAutoRefresh();
+  bootstrapData().catch(err => showToast(err.message));
 }
 
 async function api(path, options = {}) {
-  if (!state.apiBase || !state.adminToken) throw new Error('Сначала введи Worker API URL и ADMIN_TOKEN');
+  if (!state.apiBase || !state.adminToken) throw new Error('Сначала введи ADMIN_TOKEN');
   const res = await fetch(`${state.apiBase}${path}`, {
     ...options,
     headers: {
@@ -45,6 +52,34 @@ async function api(path, options = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Ошибка API');
   return data;
+}
+
+
+function stopAutoRefresh() {
+  if (state.ordersTimer) clearInterval(state.ordersTimer);
+  if (state.statsTimer) clearInterval(state.statsTimer);
+  state.ordersTimer = null;
+  state.statsTimer = null;
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  if (!state.adminToken) return;
+  state.ordersTimer = setInterval(() => {
+    if (document.hidden) return;
+    loadOrders().catch(() => {});
+  }, ORDERS_REFRESH_MS);
+  state.statsTimer = setInterval(() => {
+    if (document.hidden) return;
+    loadStats().catch(() => {});
+  }, STATS_REFRESH_MS);
+}
+
+async function bootstrapData() {
+  await loadStats();
+  await loadOrders();
+  await loadMenu();
+  await loadZones();
 }
 
 function initNav() {
@@ -68,15 +103,27 @@ async function loadStats() {
   $('#statsGrid').innerHTML = items.map(([label, value]) => `<div class="statCard panel"><div class="statCard__label">${label}</div><div class="statCard__value">${value}</div></div>`).join('');
 }
 
-async function loadOrders() {
+async function loadOrders(silent = false) {
   const q = encodeURIComponent($('#orderSearch').value.trim());
   const status = encodeURIComponent($('#orderStatusFilter').value);
   const site = encodeURIComponent($('#orderSiteFilter').value);
+  const previousIds = new Set((state.orders || []).map(order => order.id));
   const data = await api(`/admin/orders?limit=100&q=${q}&status=${status}&site=${site}`);
   state.orders = data.items || [];
   renderOrdersList();
+
+  if (!silent && previousIds.size) {
+    const fresh = state.orders.filter(order => !previousIds.has(order.id)).length;
+    if (fresh > 0) showToast(`Новых заказов: ${fresh}`);
+  }
+
   if (state.selectedOrderId) {
-    await openOrder(state.selectedOrderId).catch(() => {});
+    const stillExists = state.orders.some(order => order.id === state.selectedOrderId);
+    if (stillExists) await openOrder(state.selectedOrderId).catch(() => {});
+    else {
+      state.selectedOrderId = null;
+      $('#orderDetails').innerHTML = '<div class="emptyState">Выбери заказ слева, чтобы увидеть детали.</div>';;
+    }
   }
 }
 
@@ -94,7 +141,7 @@ function renderOrdersList() {
       </div>
       <div>${order.customer?.name || '—'} · ${order.customer?.phone || '—'}</div>
       <div>${order.delivery?.address || order.delivery?.restaurant || '—'}</div>
-      <div>${new Date(order.createdAt).toLocaleString('ru-RU')} · ${order.total} ₽ · ${order.site || '—'}</div>
+      <div>${new Date(order.createdAt).toLocaleString('ru-RU')} · ${order.total} ₽ · ${SITE_LABELS[order.site] || order.site || '—'}</div>
     </div>
   `).join('');
   $$('.orderCard').forEach(card => card.addEventListener('click', () => openOrder(card.dataset.orderId)));
@@ -110,7 +157,7 @@ async function openOrder(orderId) {
     <div class="editorHead">
       <div>
         <h3 style="margin:0">#${order.id}</h3>
-        <div style="opacity:.7">${new Date(order.createdAt).toLocaleString('ru-RU')} · ${order.site}</div>
+        <div style="opacity:.7">${new Date(order.createdAt).toLocaleString('ru-RU')} · ${SITE_LABELS[order.site] || order.site || '—'}</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <select id="statusSelect">
@@ -397,7 +444,7 @@ async function saveZones() {
 }
 
 function bindEvents() {
-  $('#apiBase').value = state.apiBase;
+  $('#apiBaseLabel').textContent = state.apiBase;
   $('#adminToken').value = state.adminToken;
   $('#saveAuthBtn').addEventListener('click', saveAuth);
   $('#refreshStatsBtn').addEventListener('click', loadStats);
@@ -426,10 +473,8 @@ function bindEvents() {
   initNav();
   bindEvents();
   await initZones();
-  if (state.apiBase && state.adminToken) {
-    loadStats().catch(err => showToast(err.message));
-    loadOrders().catch(err => showToast(err.message));
-    loadMenu().catch(err => showToast(err.message));
-    loadZones().catch(err => showToast(err.message));
+  if (state.adminToken) {
+    startAutoRefresh();
+    bootstrapData().catch(err => showToast(err.message));
   }
 })();
