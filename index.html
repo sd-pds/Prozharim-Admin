@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прожарим — Панель управления</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=62bb0bf1-3235-41f0-b3de-b09cfed11b52&lang=ru_RU"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__title">ПРОЖАРИМ</div>
+        <div class="brand__sub">Панель управления</div>
+      </div>
+
+      <div class="authBox">
+        <label>Worker API URL</label>
+        <input id="apiBase" placeholder="https://your-worker.workers.dev" />
+        <label>ADMIN_TOKEN</label>
+        <input id="adminToken" type="password" placeholder="Введите токен" />
+        <button class="btn btn--primary w100" id="saveAuthBtn">Подключить</button>
+      </div>
+
+      <nav class="nav">
+        <button class="nav__btn isOn" data-tab="orders">Колл-центр</button>
+        <button class="nav__btn" data-tab="menu">Меню</button>
+        <button class="nav__btn" data-tab="zones">Зоны доставки</button>
+        <button class="nav__btn" data-tab="settings">Инструкция</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="tab isOn" id="tab-orders">
+        <div class="pageHead">
+          <div>
+            <h1>Колл-центр</h1>
+            <p>Новые заказы из Cloudflare KV с фильтрами, статусами и статистикой.</p>
+          </div>
+          <div class="pageHead__actions">
+            <button class="btn" id="refreshStatsBtn">Обновить статистику</button>
+            <button class="btn btn--primary" id="refreshOrdersBtn">Обновить заказы</button>
+          </div>
+        </div>
+
+        <div class="statsGrid" id="statsGrid"></div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <input id="orderSearch" placeholder="Поиск: номер, телефон, адрес" />
+            <select id="orderStatusFilter">
+              <option value="">Все статусы</option>
+              <option value="new">new</option>
+              <option value="confirmed">confirmed</option>
+              <option value="cooking">cooking</option>
+              <option value="delivery">delivery</option>
+              <option value="done">done</option>
+              <option value="cancelled">cancelled</option>
+            </select>
+            <select id="orderSiteFilter">
+              <option value="">Все сайты</option>
+              <option value="ПРОЖАРИМ">ПРОЖАРИМ</option>
+              <option value="СУШИДЗА">СУШИДЗА</option>
+              <option value="БАНЗАЙ">БАНЗАЙ</option>
+            </select>
+          </div>
+
+          <div class="ordersLayout">
+            <div class="ordersList" id="ordersList"></div>
+            <div class="orderDetails" id="orderDetails">
+              <div class="emptyState">Выбери заказ слева, чтобы увидеть детали.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-menu">
+        <div class="pageHead">
+          <div>
+            <h1>Меню</h1>
+            <p>Редактирование data/menu.json и загрузка фотографий блюд в GitHub.</p>
+          </div>
+          <div class="pageHead__actions">
+            <button class="btn" id="loadMenuBtn">Загрузить menu.json</button>
+            <button class="btn btn--primary" id="saveMenuBtn">Сохранить menu.json</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <input id="menuSearch" placeholder="Поиск по названию или категории" />
+            <button class="btn" id="addMenuItemBtn">Добавить позицию</button>
+          </div>
+          <div class="menuLayout">
+            <div class="menuTableWrap">
+              <table class="table" id="menuTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Категория</th>
+                    <th>Цена</th>
+                    <th>Вес</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="editorCard">
+              <div class="editorHead">
+                <h3 id="menuEditorTitle">Новая позиция</h3>
+                <button class="btn btn--danger" id="deleteMenuItemBtn">Удалить</button>
+              </div>
+              <div class="formGrid formGrid--2">
+                <label>ID<input id="menuId" /></label>
+                <label>Категория<input id="menuCategory" /></label>
+                <label class="span2">Название<input id="menuName" /></label>
+                <label class="span2">Описание<textarea id="menuDesc"></textarea></label>
+                <label>Цена<input id="menuPrice" type="number" /></label>
+                <label>Вес/объём<input id="menuWeight" /></label>
+                <label>Hit<select id="menuHit"><option value="false">false</option><option value="true">true</option></select></label>
+                <label>Изображение<input id="menuImg" /></label>
+                <label class="span2">Загрузить фото<input id="menuImageFile" type="file" accept="image/*" /></label>
+                <label class="span2">Предпросмотр<div class="previewBox"><img id="menuPreview" alt=""></div></label>
+              </div>
+              <div class="editorActions">
+                <button class="btn" id="uploadMenuImageBtn">Загрузить фото в GitHub</button>
+                <button class="btn btn--primary" id="applyMenuItemBtn">Применить к списку</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-zones">
+        <div class="pageHead">
+          <div>
+            <h1>Зоны доставки</h1>
+            <p>Редактор GeoJSON с Яндекс Картой, тарифом, рестораном и стоимостью доставки.</p>
+          </div>
+          <div class="pageHead__actions">
+            <select id="zoneFileSelect">
+              <option value="data/zones_day.geojson">Дневные зоны</option>
+              <option value="data/zones_night.geojson">Ночные зоны</option>
+            </select>
+            <button class="btn" id="loadZonesBtn">Загрузить зоны</button>
+            <button class="btn btn--primary" id="saveZonesBtn">Сохранить GeoJSON</button>
+          </div>
+        </div>
+
+        <div class="panel zonesPanel">
+          <div class="zonesSidebar">
+            <div class="toolbar toolbar--stack">
+              <button class="btn" id="addZoneBtn">Новый полигон</button>
+              <button class="btn" id="editZoneBtn">Редактировать границы</button>
+              <button class="btn" id="stopEditZoneBtn">Завершить редактирование</button>
+              <button class="btn btn--danger" id="deleteZoneBtn">Удалить полигон</button>
+            </div>
+            <div id="zoneList" class="zoneList"></div>
+            <div class="editorCard">
+              <h3>Свойства зоны</h3>
+              <div class="formGrid">
+                <label>Название зоны<input id="zoneName" /></label>
+                <label>Стоимость доставки<input id="zonePrice" type="number" /></label>
+                <label>Ресторан
+                  <select id="zoneRestaurant">
+                    <option>Театральная 1/1</option>
+                    <option>27 Линия 60</option>
+                    <option>Кичигина 8</option>
+                  </select>
+                </label>
+              </div>
+              <div class="editorActions">
+                <button class="btn btn--primary" id="applyZonePropsBtn">Применить свойства</button>
+              </div>
+            </div>
+          </div>
+          <div class="mapWrap">
+            <div id="zonesMap"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-settings">
+        <div class="pageHead">
+          <div>
+            <h1>Что и куда подключать</h1>
+            <p>Краткая памятка прямо в панели.</p>
+          </div>
+        </div>
+        <div class="panel prose">
+          <h3>Cloudflare Worker</h3>
+          <p>Вставь полный worker из архива в существующий Worker. В Variables / Secrets добавь: ADMIN_TOKEN, GH_TOKEN, GH_OWNER, GH_REPO, GH_BRANCH, BOT_TOKEN, CHAT_ID, VK_TOKEN, VK_PEER_ID, SECRET_PROZHARIM и подключи KV namespace ORDERS_KV.</p>
+          <h3>GitHub</h3>
+          <p>GH_OWNER — владелец репозитория, GH_REPO — имя репозитория основного сайта, GH_BRANCH — обычно main. Токену GitHub нужны права на contents: read/write.</p>
+          <h3>Админка</h3>
+          <p>Залей этот архив в отдельный репозиторий GitHub Pages, открой сайт на отдельном домене, введи URL Worker и ADMIN_TOKEN в боковой панели. Данные сохраняются через Worker прямо в GitHub и KV.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
