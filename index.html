@@ -118,8 +118,13 @@
                 <label>Категория<input id="menuCategory" /></label>
                 <label class="span2">Название<input id="menuName" /></label>
                 <label class="span2">Описание<textarea id="menuDesc"></textarea></label>
-                <label>Цена<input id="menuPrice" type="number" /></label>
-                <label>Вес/объём<input id="menuWeight" /></label>
+                <div class="span2 variantsCard">
+                  <div class="variantsHead">
+                    <strong>Варианты цены и веса</strong>
+                    <button class="btn" id="addVariantBtn" type="button">+ Добавить вариант</button>
+                  </div>
+                  <div id="menuVariants" class="variantsList"></div>
+                </div>
                 <label>Hit<select id="menuHit"><option value="false">false</option><option value="true">true</option></select></label>
                 <label>Изображение<input id="menuImg" /></label>
                 <label class="span2">Загрузить фото<input id="menuImageFile" type="file" accept="image/*" /></label>

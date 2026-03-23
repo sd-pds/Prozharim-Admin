@@ -236,8 +236,7 @@ function selectMenuItem(index) {
   $('#menuCategory').value = item.category || '';
   $('#menuName').value = item.name || '';
   $('#menuDesc').value = item.desc || '';
-  $('#menuPrice').value = item.price || '';
-  $('#menuWeight').value = item.weight || '';
+  renderVariantRows(getItemVariants(item));
   $('#menuHit').value = String(Boolean(item.hit));
   $('#menuImg').value = item.img || '';
   $('#menuPreview').src = item.img || '';
@@ -245,16 +244,37 @@ function selectMenuItem(index) {
 }
 
 function readMenuEditor() {
-  return {
+  const variants = readVariantRows()
+    .map(v => ({
+      price: v.price === '' ? '' : Number(v.price),
+      weight: String(v.weight || '').trim()
+    }))
+    .filter((v, index) => index === 0 || v.price !== '' || v.weight !== '');
+
+  const item = {
     id: $('#menuId').value.trim(),
     category: $('#menuCategory').value.trim(),
     name: $('#menuName').value.trim(),
     desc: $('#menuDesc').value.trim(),
-    price: Number($('#menuPrice').value || 0),
-    weight: $('#menuWeight').value.trim(),
     hit: $('#menuHit').value === 'true',
     img: $('#menuImg').value.trim()
   };
+
+  if (variants[0]) {
+    item.price = variants[0].price === '' ? 0 : variants[0].price;
+    item.weight = variants[0].weight;
+  } else {
+    item.price = 0;
+    item.weight = '';
+  }
+
+  for (let i = 1; i < variants.length; i++) {
+    const suffix = i + 1;
+    item[`price${suffix}`] = variants[i].price === '' ? 0 : variants[i].price;
+    item[`weight${suffix}`] = variants[i].weight;
+  }
+
+  return item;
 }
 
 function applyMenuItem() {
@@ -324,6 +344,60 @@ function fileToBase64(file) {
 
 function translitFilename(name) {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]+/g, '-');
+}
+
+
+function getItemVariants(item = {}) {
+  const variants = [];
+  if (item.price !== undefined || item.weight !== undefined) {
+    variants.push({ price: item.price ?? '', weight: item.weight ?? '' });
+  }
+  for (let i = 2; i <= 20; i++) {
+    const priceKey = `price${i}`;
+    const weightKey = `weight${i}`;
+    if (Object.prototype.hasOwnProperty.call(item, priceKey) || Object.prototype.hasOwnProperty.call(item, weightKey)) {
+      variants.push({ price: item[priceKey] ?? '', weight: item[weightKey] ?? '' });
+    }
+  }
+  return variants.length ? variants : [{ price: '', weight: '' }];
+}
+
+function renderVariantRows(variants) {
+  const wrap = $('#menuVariants');
+  if (!wrap) return;
+  wrap.innerHTML = (variants || []).map((variant, index) => `
+    <div class="variantRow" data-variant-index="${index}">
+      <label>Цена ${index + 1}<input class="variantPrice" type="number" value="${variant.price ?? ''}" /></label>
+      <label>Вес/объём ${index + 1}<input class="variantWeight" value="${variant.weight ?? ''}" /></label>
+      <button class="btn ${index === 0 ? '' : 'btn--danger'} variantRemoveBtn" type="button" ${index === 0 ? 'disabled title="Первый вариант обязателен"' : ''}>${index === 0 ? 'Основной' : 'Удалить'}</button>
+    </div>
+  `).join('');
+
+  $$('.variantRemoveBtn').forEach(btn => btn.addEventListener('click', () => {
+    const row = btn.closest('.variantRow');
+    const idx = Number(row?.dataset.variantIndex);
+    removeVariantRow(idx);
+  }));
+}
+
+function readVariantRows() {
+  return $$('.variantRow').map(row => ({
+    price: row.querySelector('.variantPrice')?.value ?? '',
+    weight: row.querySelector('.variantWeight')?.value?.trim?.() ?? ''
+  }));
+}
+
+function addVariantRow() {
+  const variants = readVariantRows();
+  variants.push({ price: '', weight: '' });
+  renderVariantRows(variants);
+}
+
+function removeVariantRow(index) {
+  const variants = readVariantRows();
+  if (index <= 0 || variants.length <= 1) return;
+  variants.splice(index, 1);
+  renderVariantRows(variants);
 }
 
 async function initZones() {
@@ -477,6 +551,7 @@ function bindEvents() {
   $('#deleteMenuItemBtn').addEventListener('click', deleteMenuItem);
   $('#uploadMenuImageBtn').addEventListener('click', () => uploadMenuImage().catch(err => showToast(err.message)));
   $('#menuSearch').addEventListener('input', renderMenuTable);
+  $('#addVariantBtn').addEventListener('click', addVariantRow);
   $('#menuImg').addEventListener('input', () => { $('#menuPreview').src = $('#menuImg').value.trim(); });
   $('#loadZonesBtn').addEventListener('click', () => loadZones().catch(err => showToast(err.message)));
   $('#saveZonesBtn').addEventListener('click', () => saveZones().catch(err => showToast(err.message)));
