@@ -21,6 +21,23 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const SITE_LABELS = { prozharim: 'ПРОЖАРИМ', sushidza: 'СУШИДЗА', banzai: 'БАНЗАЙ' };
 
+
+function flipLngLatToLatLng(coords) {
+  if (!Array.isArray(coords)) return coords;
+  if (coords.length === 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+    return [coords[1], coords[0]];
+  }
+  return coords.map(flipLngLatToLatLng);
+}
+
+function flipLatLngToLngLat(coords) {
+  if (!Array.isArray(coords)) return coords;
+  if (coords.length === 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+    return [coords[1], coords[0]];
+  }
+  return coords.map(flipLatLngToLngLat);
+}
+
 function showToast(message) {
   const el = $('#toast');
   el.textContent = message;
@@ -333,8 +350,9 @@ function renderZones() {
   list.innerHTML = features.length ? '' : '<div class="emptyState">Зоны не загружены</div>';
 
   features.forEach((feature, index) => {
-    const coords = feature.geometry?.type === 'Polygon' ? feature.geometry.coordinates : [];
-    const polygon = new ymaps.Polygon(coords, {
+    const rawCoords = feature.geometry?.type === 'Polygon' ? feature.geometry.coordinates : [];
+    const ymapsCoords = flipLngLatToLatLng(rawCoords);
+    const polygon = new ymaps.Polygon(ymapsCoords, {
       hintContent: feature.properties?.zone || `Зона ${index + 1}`,
       balloonContent: feature.properties?.restaurant || ''
     }, {
@@ -410,7 +428,7 @@ function syncSelectedZoneGeometry() {
   const obj = currentZoneObject();
   const feature = state.zones?.features?.[state.selectedZoneIndex];
   if (!obj || !feature) return;
-  feature.geometry.coordinates = obj.geometry.getCoordinates();
+  feature.geometry.coordinates = flipLatLngToLngLat(obj.geometry.getCoordinates());
 }
 
 function applyZoneProps() {
