@@ -16,18 +16,18 @@
       </div>
 
       <div class="authBox">
-        <label>Worker API</label>
-        <div class="authHint" id="apiBaseLabel">https://prozharim-oreder-api.polihov-alexey-a.workers.dev</div>
-        <label>ADMIN_TOKEN</label>
-        <input id="adminToken" type="password" placeholder="Введите токен" />
-        <button class="btn btn--primary w100" id="saveAuthBtn">Подключить</button>
+        <!-- <label>Worker API</label>
+        <div class="authHint" id="apiBaseLabel">https://prozharim-oreder-api.polihov-alexey-a.workers.dev</div> -->
+        <label>Ключ подключения</label>
+        <input id="adminToken" type="password" placeholder="Введите пароль" />
+        <button class="btn btn--primary w100" id="saveAuthBtn">Подключиться</button>
       </div>
 
       <nav class="nav">
         <button class="nav__btn isOn" data-tab="orders">Колл-центр</button>
         <button class="nav__btn" data-tab="menu">Меню</button>
         <button class="nav__btn" data-tab="zones">Зоны доставки</button>
-        <button class="nav__btn" data-tab="settings">Инструкция</button>
+        <!-- <button class="nav__btn" data-tab="settings">Инструкция</button> -->
       </nav>
     </aside>
 
@@ -36,7 +36,7 @@
         <div class="pageHead">
           <div>
             <h1>Колл-центр</h1>
-            <p>Новые заказы из Cloudflare KV с фильтрами, статусами и статистикой.</p>
+            <!-- <p>Новые заказы из Cloudflare KV с фильтрами, статусами и статистикой.</p> -->
           </div>
           <div class="pageHead__actions">
             <button class="btn" id="refreshStatsBtn">Обновить статистику</button>
@@ -51,12 +51,12 @@
             <input id="orderSearch" placeholder="Поиск: номер, телефон, адрес" />
             <select id="orderStatusFilter">
               <option value="">Все статусы</option>
-              <option value="new">new</option>
-              <option value="confirmed">confirmed</option>
-              <option value="cooking">cooking</option>
-              <option value="delivery">delivery</option>
-              <option value="done">done</option>
-              <option value="cancelled">cancelled</option>
+              <option value="new">Новый</option>
+              <option value="confirmed">Подтверждён</option>
+              <option value="cooking">Готовится</option>
+              <option value="delivery">Доставляется</option>
+              <option value="done">Выполнен</option>
+              <option value="cancelled">Отменён</option>
             </select>
             <select id="orderSiteFilter">
               <option value="">Все сайты</option>
@@ -69,7 +69,7 @@
           <div class="ordersLayout">
             <div class="ordersList" id="ordersList"></div>
             <div class="orderDetails" id="orderDetails">
-              <div class="emptyState">Выбери заказ слева, чтобы увидеть детали.</div>
+              <div class="emptyState">Выбери заказ, чтобы увидеть детали.</div>
             </div>
           </div>
         </div>
@@ -79,11 +79,11 @@
         <div class="pageHead">
           <div>
             <h1>Меню</h1>
-            <p>Редактирование data/menu.json и загрузка фотографий блюд в GitHub.</p>
+            <!-- <p>Редактирование data/menu.json и загрузка фотографий блюд в GitHub.</p> -->
           </div>
           <div class="pageHead__actions">
-            <button class="btn" id="loadMenuBtn">Загрузить menu.json</button>
-            <button class="btn btn--primary" id="saveMenuBtn">Сохранить menu.json</button>
+            <button class="btn" id="loadMenuBtn">Загрузить с сервера</button>
+            <button class="btn btn--primary" id="saveMenuBtn">Сохранить изменения</button>
           </div>
         </div>
 
@@ -131,7 +131,7 @@
                 <label class="span2">Предпросмотр<div class="previewBox"><img id="menuPreview" alt=""></div></label>
               </div>
               <div class="editorActions">
-                <button class="btn" id="uploadMenuImageBtn">Загрузить фото в GitHub</button>
+                <button class="btn" id="uploadMenuImageBtn">Загрузить фото на сервер</button>
                 <button class="btn btn--primary" id="applyMenuItemBtn">Применить к списку</button>
               </div>
             </div>
@@ -143,7 +143,7 @@
         <div class="pageHead">
           <div>
             <h1>Зоны доставки</h1>
-            <p>Редактор GeoJSON с Яндекс Картой, тарифом, рестораном и стоимостью доставки.</p>
+            <!-- <p>Редактор GeoJSON с Яндекс Картой, тарифом, рестораном и стоимостью доставки.</p> -->
           </div>
           <div class="pageHead__actions">
             <select id="zoneFileSelect">
@@ -151,7 +151,7 @@
               <option value="data/zones_night.geojson">Ночные зоны</option>
             </select>
             <button class="btn" id="loadZonesBtn">Загрузить зоны</button>
-            <button class="btn btn--primary" id="saveZonesBtn">Сохранить GeoJSON</button>
+            <button class="btn btn--primary" id="saveZonesBtn">Сохранить изменения</button>
           </div>
         </div>
 
@@ -188,7 +188,7 @@
         </div>
       </section>
 
-      <section class="tab" id="tab-settings">
+      <!-- <section class="tab" id="tab-settings">
         <div class="pageHead">
           <div>
             <h1>Что и куда подключать</h1>
@@ -203,7 +203,7 @@
           <h3>Админка</h3>
           <p>Залей этот архив в отдельный репозиторий GitHub Pages, открой сайт на отдельном домене, введи только ADMIN_TOKEN в боковой панели. Данные сохраняются через Worker прямо в GitHub и KV.</p>
         </div>
-      </section>
+      </section> -->
     </main>
   </div>
 
