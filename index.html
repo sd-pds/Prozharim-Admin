@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прожарим — Панель управления</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=62bb0bf1-3235-41f0-b3de-b09cfed11b52&lang=ru_RU"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__title">ПРОЖАРИМ</div>
+        <div class="brand__sub">Панель управления</div>
+      </div>
+
+      <div class="authBox">
+        <div class="authHint">Вход по ADMIN_TOKEN. Адрес Worker скрыт в коде.</div>
+        <div id="connectState" class="connectState">Введите ADMIN_TOKEN для загрузки меню и зон</div>
+        <label>Ключ подключения</label>
+        <input id="adminToken" type="password" placeholder="Введите пароль" />
+        <button class="btn btn--primary w100" id="saveAuthBtn">Подключиться</button>
+      </div>
+
+      <nav class="nav">
+        <button class="nav__btn isOn" data-tab="menu">Меню</button>
+        <button class="nav__btn" data-tab="zones">Зоны доставки</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="tab isOn" id="tab-menu">
+        <div class="pageHead">
+          <div>
+            <h1>Меню</h1>
+            <p>Редактирование menu.json и загрузка фотографий блюд в GitHub.</p>
+          </div>
+          <div class="pageHead__actions">
+            <button class="btn" id="loadMenuBtn">Загрузить с сервера</button>
+            <button class="btn btn--primary" id="saveMenuBtn">Сохранить изменения</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <input id="menuSearch" placeholder="Поиск по названию или категории" />
+            <button class="btn" id="addMenuItemBtn">Добавить позицию</button>
+          </div>
+          <div class="menuLayout">
+            <div class="menuTableWrap limitedBox">
+              <table class="table" id="menuTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Категория</th>
+                    <th>Цена</th>
+                    <th>Вес</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="editorCard">
+              <div class="editorHead">
+                <h3 id="menuEditorTitle">Новая позиция</h3>
+                <button class="btn btn--danger" id="deleteMenuItemBtn">Удалить</button>
+              </div>
+              <div class="formGrid formGrid--2">
+                <label>ID<input id="menuId" /></label>
+                <label>Категория<input id="menuCategory" /></label>
+                <label class="span2">Название<input id="menuName" /></label>
+                <label class="span2">Описание<textarea id="menuDesc"></textarea></label>
+                <div class="span2 variantsCard">
+                  <div class="variantsHead">
+                    <strong>Варианты цены и веса</strong>
+                    <button class="btn" id="addVariantBtn" type="button">+ Добавить вариант</button>
+                  </div>
+                  <div id="menuVariants" class="variantsList"></div>
+                </div>
+                <label>Hit<select id="menuHit"><option value="false">false</option><option value="true">true</option></select></label>
+                <label>Изображение<input id="menuImg" /></label>
+                <label class="span2">Загрузить фото<input id="menuImageFile" type="file" accept="image/*" /></label>
+                <label class="span2">Предпросмотр<div class="previewBox"><img id="menuPreview" alt=""></div></label>
+              </div>
+              <div class="editorActions">
+                <button class="btn" id="uploadMenuImageBtn">Загрузить фото на сервер</button>
+                <button class="btn btn--primary" id="applyMenuItemBtn">Применить к списку</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab" id="tab-zones">
+        <div class="pageHead">
+          <div>
+            <h1>Зоны доставки</h1>
+            <p>Редактор дневных и ночных зон.</p>
+          </div>
+          <div class="pageHead__actions">
+            <select id="zoneFileSelect">
+              <option value="data/zones_day.geojson">Дневные зоны</option>
+              <option value="data/zones_night.geojson">Ночные зоны</option>
+            </select>
+            <button class="btn" id="loadZonesBtn">Загрузить зоны</button>
+            <button class="btn btn--primary" id="saveZonesBtn">Сохранить изменения</button>
+          </div>
+        </div>
+
+        <div class="panel zonesPanel">
+          <div class="zonesSidebar">
+            <div class="toolbar toolbar--stack">
+              <button class="btn" id="addZoneBtn">Новый полигон</button>
+              <button class="btn" id="editZoneBtn">Редактировать границы</button>
+              <button class="btn" id="stopEditZoneBtn">Завершить редактирование</button>
+              <button class="btn btn--danger" id="deleteZoneBtn">Удалить полигон</button>
+            </div>
+            <div id="zoneList" class="zoneList"></div>
+            <div class="editorCard">
+              <h3>Свойства зоны</h3>
+              <div class="formGrid">
+                <label>Название зоны<input id="zoneName" /></label>
+                <label>Стоимость доставки<input id="zonePrice" type="number" /></label>
+                <label>Ресторан
+                  <select id="zoneRestaurant">
+                    <option>Театральная 1/1</option>
+                    <option>27 Линия 60</option>
+                    <option>Кичигина 8</option>
+                  </select>
+                </label>
+              </div>
+              <div class="editorActions">
+                <button class="btn btn--primary" id="applyZonePropsBtn">Применить свойства</button>
+              </div>
+            </div>
+          </div>
+          <div class="mapWrap">
+            <div id="zonesMap"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
