@@ -16,70 +16,24 @@
       </div>
 
       <div class="authBox">
-        <!-- <label>Worker API</label> -->
-        <div class="authHint" id="apiBaseLabel">https://prozharim-oreder-api.polihov-alexey-a.workers.dev</div>
+        <div class="authHint">Вход по ADMIN_TOKEN</div>
         <label>Ключ подключения</label>
         <input id="adminToken" type="password" placeholder="Введите пароль" />
         <button class="btn btn--primary w100" id="saveAuthBtn">Подключиться</button>
       </div>
 
       <nav class="nav">
-        <button class="nav__btn isOn" data-tab="orders">Колл-центр</button>
-        <button class="nav__btn" data-tab="menu">Меню</button>
+        <button class="nav__btn isOn" data-tab="menu">Меню</button>
         <button class="nav__btn" data-tab="zones">Зоны доставки</button>
-        <!-- <button class="nav__btn" data-tab="settings">Инструкция</button> -->
       </nav>
     </aside>
 
     <main class="main">
-      <section class="tab isOn" id="tab-orders">
-        <div class="pageHead">
-          <div>
-            <h1>Колл-центр</h1>
-            <!-- <p>Новые заказы из Cloudflare KV с фильтрами, статусами и статистикой.</p> -->
-          </div>
-          <div class="pageHead__actions">
-            <button class="btn" id="refreshStatsBtn">Обновить статистику</button>
-            <button class="btn btn--primary" id="refreshOrdersBtn">Обновить заказы</button>
-          </div>
-        </div>
-
-        <div class="statsGrid" id="statsGrid"></div>
-
-        <div class="panel">
-          <div class="toolbar">
-            <input id="orderSearch" placeholder="Поиск: номер, телефон, адрес" />
-            <select id="orderStatusFilter">
-              <option value="">Все статусы</option>
-              <option value="new">Новый</option>
-              <option value="confirmed">Подтверждён</option>
-              <option value="cooking">Готовится</option>
-              <option value="delivery">Доставляется</option>
-              <option value="done">Выполнен</option>
-              <option value="cancelled">Отменён</option>
-            </select>
-            <select id="orderSiteFilter">
-              <option value="">Все сайты</option>
-              <option value="prozharim">ПРОЖАРИМ</option>
-              <option value="sushidza">СУШИДЗА</option>
-              <option value="banzai">БАНЗАЙ</option>
-            </select>
-          </div>
-
-          <div class="ordersLayout">
-            <div class="ordersList" id="ordersList"></div>
-            <div class="orderDetails" id="orderDetails">
-              <div class="emptyState">Выбери заказ, чтобы увидеть детали.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab" id="tab-menu">
+      <section class="tab isOn" id="tab-menu">
         <div class="pageHead">
           <div>
             <h1>Меню</h1>
-            <!-- <p>Редактирование data/menu.json и загрузка фотографий блюд в GitHub.</p> -->
+            <p>Редактирование menu.json и загрузка фотографий блюд в GitHub.</p>
           </div>
           <div class="pageHead__actions">
             <button class="btn" id="loadMenuBtn">Загрузить с сервера</button>
@@ -93,7 +47,7 @@
             <button class="btn" id="addMenuItemBtn">Добавить позицию</button>
           </div>
           <div class="menuLayout">
-            <div class="menuTableWrap">
+            <div class="menuTableWrap limitedBox">
               <table class="table" id="menuTable">
                 <thead>
                   <tr>
@@ -143,7 +97,7 @@
         <div class="pageHead">
           <div>
             <h1>Зоны доставки</h1>
-            <!-- <p>Редактор GeoJSON с Яндекс Картой, тарифом, рестораном и стоимостью доставки.</p> -->
+            <p>Редактор дневных и ночных зон.</p>
           </div>
           <div class="pageHead__actions">
             <select id="zoneFileSelect">
@@ -187,23 +141,6 @@
           </div>
         </div>
       </section>
-
-      <!-- <section class="tab" id="tab-settings">
-        <div class="pageHead">
-          <div>
-            <h1>Что и куда подключать</h1>
-            <p>Краткая памятка прямо в панели.</p>
-          </div>
-        </div>
-        <div class="panel prose">
-          <h3>Cloudflare Worker</h3>
-          <p>Вставь полный worker из архива в существующий Worker. В Variables / Secrets добавь: ADMIN_TOKEN, GH_TOKEN, GH_OWNER, GH_REPO, GH_BRANCH, BOT_TOKEN, CHAT_ID, VK_TOKEN, VK_PEER_ID, SECRET_PROZHARIM и подключи KV namespace ORDERS_KV.</p>
-          <h3>GitHub</h3>
-          <p>GH_OWNER — владелец репозитория, GH_REPO — имя репозитория основного сайта, GH_BRANCH — обычно main. Токену GitHub нужны права на contents: read/write.</p>
-          <h3>Админка</h3>
-          <p>Залей этот архив в отдельный репозиторий GitHub Pages, открой сайт на отдельном домене, введи только ADMIN_TOKEN в боковой панели. Данные сохраняются через Worker прямо в GitHub и KV.</p>
-        </div>
-      </section> -->
     </main>
   </div>
 
