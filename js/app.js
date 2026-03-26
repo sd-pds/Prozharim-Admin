@@ -46,21 +46,21 @@ function setAuthBusy(isBusy) {
 async function verifyConnection(token) {
   const res = await fetch(`${state.apiBase}/admin/ping`, { headers: { 'X-Admin-Token': token } });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Ошибка API');
-  if (!data.hasGithub) throw new Error('Worker не видит GitHub: проверь GH_TOKEN, GH_OWNER, GH_REPO');
+  if (!res.ok) throw new Error(data.error || 'Код ошибки API1. Обратитесь к разработчику.');
+  if (!data.hasGithub) throw new Error('Код ошибки WGE1. Обратитесь к разработчику.');
   return data;
 }
 async function saveAuth() {
   const token = $('#adminToken').value.trim();
-  if (!token) return showToast('Введите ADMIN_TOKEN');
+  if (!token) return showToast('Введите пароль');
   setAuthBusy(true);
   setConnectionState('Проверка подключения...', 'pending');
   try {
     const ping = await verifyConnection(token);
     state.adminToken = token;
     localStorage.setItem('proz_admin_token', state.adminToken);
-    setConnectionState(`Подключено · ${ping.githubOwner}/${ping.githubRepo}`, 'success');
-    showToast('Подключение подтверждено');
+    setConnectionState(`Подключение установлено.`, 'success');
+    showToast('Подключение установлено');
     await bootstrapData();
   } catch (err) {
     setConnectionState(err.message || 'Ошибка подключения', 'error');
@@ -70,7 +70,7 @@ async function saveAuth() {
   }
 }
 async function api(path, options = {}) {
-  if (!state.adminToken) throw new Error('Сначала введи ADMIN_TOKEN');
+  if (!state.adminToken) throw new Error('Сначала введи пароль');
   const res = await fetch(`${state.apiBase}${path}`, {
     ...options,
     headers: {
@@ -80,7 +80,7 @@ async function api(path, options = {}) {
     }
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Ошибка API');
+  if (!res.ok) throw new Error(data.error || 'Код ошибки API1. Обратитесь к разработчику.');
   return data;
 }
 async function bootstrapData() {
@@ -214,8 +214,8 @@ function deleteMenuItem() {
   showToast('Позиция удалена из локального списка');
 }
 async function saveMenu() {
-  await api('/admin/github/save-json', { method: 'POST', body: JSON.stringify({ path: 'data/menu.json', content: state.menu, message: 'Update menu.json from admin panel' }) });
-  showToast('menu.json сохранён в GitHub');
+  await api('/admin/github/save-json', { method: 'POST', body: JSON.stringify({ path: 'data/menu.json', content: state.menu, message: 'Update menu from admin panel' }) });
+  showToast('Меню сохранёно на сервере');
 }
 async function uploadMenuImage() {
   const file = $('#menuImageFile').files[0];
@@ -225,7 +225,7 @@ async function uploadMenuImage() {
   const data = await api('/admin/github/upload-image', { method: 'POST', body: JSON.stringify({ filename: safeName, contentBase64: base64, folder: 'assets/photos' }) });
   $('#menuImg').value = data.publicPath;
   $('#menuPreview').src = data.publicPath;
-  showToast('Фото загружено в GitHub');
+  showToast('Фото загружено на сервер');
 }
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -291,7 +291,7 @@ function stopZoneEditing() { const obj = currentZoneObject(); if (!obj) return; 
 function syncSelectedZoneGeometry() { const obj = currentZoneObject(); const feature = state.zones?.features?.[state.selectedZoneIndex]; if (!obj || !feature) return; feature.geometry.coordinates = flipLatLngToLngLat(obj.geometry.getCoordinates()); }
 function applyZoneProps() { const feature = state.zones?.features?.[state.selectedZoneIndex]; if (!feature) return showToast('Сначала выбери зону'); feature.properties = { ...(feature.properties || {}), zone: $('#zoneName').value.trim(), deliveryPrice: Number($('#zonePrice').value || 0), restaurant: $('#zoneRestaurant').value }; renderZones(); showToast('Свойства зоны применены'); }
 function deleteZone() { if (state.selectedZoneIndex < 0) return showToast('Сначала выбери зону'); state.zones.features.splice(state.selectedZoneIndex, 1); state.selectedZoneIndex = -1; renderZones(); showToast('Зона удалена локально'); }
-async function saveZones() { syncSelectedZoneGeometry(); await api('/admin/github/save-json', { method: 'POST', body: JSON.stringify({ path: state.currentZonePath, content: state.zones, message: `Update ${state.currentZonePath} from admin panel` }) }); showToast('GeoJSON сохранён в GitHub'); }
+async function saveZones() { syncSelectedZoneGeometry(); await api('/admin/github/save-json', { method: 'POST', body: JSON.stringify({ path: state.currentZonePath, content: state.zones, message: `Update ${state.currentZonePath} from admin panel` }) }); showToast('Файл сохранён на сервере'); }
 function bindEvents() {
   $('#adminToken').value = state.adminToken;
   $('#saveAuthBtn').addEventListener('click', saveAuth);
@@ -317,10 +317,10 @@ function bindEvents() {
   bindEvents();
   await initZones();
   if(state.adminToken){
-    setConnectionState('Проверка сохранённого токена...', 'pending');
+    setConnectionState('Проверка сохранённого пароля...', 'pending');
     verifyConnection(state.adminToken)
       .then((ping)=>{
-        setConnectionState(`Подключено · ${ping.githubOwner}/${ping.githubRepo}`, 'success');
+        setConnectionState(`Подключение установлено.`, 'success');
         return bootstrapData();
       })
       .catch((err)=>{
@@ -328,6 +328,6 @@ function bindEvents() {
         showToast(err.message || 'Ошибка подключения');
       });
   } else {
-    setConnectionState('Введите ADMIN_TOKEN для загрузки меню и зон', '');
+    setConnectionState('Введите пароль для загрузки панели управления', '');
   }
 })();
