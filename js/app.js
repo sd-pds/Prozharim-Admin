@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = "https://prozharim-oreder-api.polihov-alexey-a.workers.dev";
+const DEFAULT_API_BASE = "https://api.полихов.рф";
 const CONFIG_PATHS = {
   site: 'config/site.json',
   theme: 'config/theme.json',
