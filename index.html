@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ПРОЖАРИМ — панель управления меню</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="css/custom-theme.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="js/config.js"></script>
+  <script defer src="js/admin.js"></script>
+</head>
+<body>
+  <div class="bg">
+    <div class="embers"></div>
+    <div class="vignette"></div>
+  </div>
+
+  <header class="header">
+    <div class="wrap header__row">
+      <a class="brand" href="#top" aria-label="ПРОЖАРИМ">
+        <img class="brand__logo" src="assets/logo.png" alt="ПРОЖАРИМ" />
+        <div class="brand__text">
+          <div class="brand__name">ПРОЖАРИМ</div>
+          <div class="brand__sub">Панель управления меню</div>
+        </div>
+      </a>
+
+      <nav class="nav">
+        <a href="#menu" class="nav__link">Меню</a>
+      </nav>
+
+      <div class="adminHeaderActions">
+        <button class="iconBtn" id="authBtn" type="button" title="Ввести пароль" aria-label="Ввести пароль">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h-1V6a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 8.73V17a1 1 0 1 0 2 0v-.27a2 2 0 1 0-2 0ZM10 8V6a2 2 0 1 1 4 0v2h-4Z"/></svg>
+        </button>
+        <button class="iconBtn iconBtn--accent" id="saveBtn" type="button" title="Сохранить" aria-label="Сохранить">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4ZM7 5h8v4H7V5Zm12 14H5V5h1v6h10V5h.17L19 7.83V19Zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero hero--admin">
+      <div class="wrap hero__grid hero__grid--single">
+        <div class="hero__content">
+          <div class="pill">Отдельная админка для управления каталогом</div>
+          <h1 class="hero__title">Управление <span class="grad"><br>меню сайта</span></h1>
+          <p class="hero__desc">Добавляйте, редактируйте и удаляйте позиции. Сохранение отправляет изменения в GitHub через Cloudflare Worker.</p>
+          <div class="hero__cta">
+            <button class="btn btn--primary" id="addProductBtn" type="button">Добавить позицию</button>
+            <button class="btn btn--ghost" id="reloadBtn" type="button">Обновить из репозитория</button>
+          </div>
+          <div class="hero__stats adminStats">
+            <div class="stat">
+              <div class="stat__num" id="statTotal">0</div>
+              <div class="stat__txt">позиций</div>
+            </div>
+            <div class="stat">
+              <div class="stat__num" id="statCategories">0</div>
+              <div class="stat__txt">категорий</div>
+            </div>
+            <div class="stat">
+              <div class="stat__num" id="statChanged">0</div>
+              <div class="stat__txt">изменений</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="menu">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Каталог</h2>
+          <div class="section__tools adminTools">
+            <div class="tabs" id="categoryTabs"></div>
+            <div class="search">
+              <input id="search" type="search" placeholder="Поиск по меню…" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <div class="panelStatus">
+          <div class="statusBadge" id="passwordStatus">Пароль не введён</div>
+          <div class="statusBadge" id="workerStatus">Worker не проверен</div>
+          <div class="statusBadge" id="repoStatus">Источник: не загружен</div>
+        </div>
+
+        <div class="grid" id="products"></div>
+      </div>
+    </section>
+  </main>
+
+  <button class="backToTop isShown" id="backToTop" type="button" aria-label="Наверх">↑</button>
+
+  <div class="modal" id="productModal" hidden>
+    <div class="modal__backdrop" data-close="productModal"></div>
+    <div class="modal__dialog modal__dialog--wide adminModal">
+      <div class="modal__head">
+        <div>
+          <div class="drawer__title" id="modalTitle">Новая позиция</div>
+          <div class="muted">Редактируется только data/menu.json</div>
+        </div>
+        <button class="drawer__close" type="button" data-close="productModal">✕</button>
+      </div>
+      <form class="checkoutForm adminForm" id="productForm">
+        <input type="hidden" name="index" />
+        <div class="grid2">
+          <label>
+            <span>ID</span>
+            <input name="id" required placeholder="pizza-pepperoni-35-sm" />
+          </label>
+          <label>
+            <span>Категория</span>
+            <input name="category" required placeholder="Пицца" />
+          </label>
+          <label class="gridSpan2">
+            <span>Название</span>
+            <input name="name" required placeholder='Пицца "Пепперони" 35 см' />
+          </label>
+          <label class="gridSpan2">
+            <span>Описание</span>
+            <textarea name="desc" rows="3" placeholder="Описание позиции"></textarea>
+          </label>
+          <label>
+            <span>Цена</span>
+            <input name="price" type="number" min="0" step="1" required placeholder="900" />
+          </label>
+          <label>
+            <span>Вес</span>
+            <input name="weight" placeholder="670 г" />
+          </label>
+          <label class="gridSpan2">
+            <span>Изображение</span>
+            <input name="img" placeholder="./assets/photos/Пицца Пепперони.webp" />
+          </label>
+          <label>
+            <span>Хит</span>
+            <select name="hit">
+              <option value="false">Нет</option>
+              <option value="true">Да</option>
+            </select>
+          </label>
+        </div>
+        <div class="adminModal__actions">
+          <button class="btn btn--ghost" type="button" data-close="productModal">Отмена</button>
+          <button class="btn btn--primary" type="submit">Сохранить позицию</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="authModal" hidden>
+    <div class="modal__backdrop" data-close="authModal"></div>
+    <div class="modal__dialog adminModal adminModal--small">
+      <div class="modal__head">
+        <div>
+          <div class="drawer__title">Пароль панели</div>
+          <div class="muted">Пароль нужен только для сохранения изменений</div>
+        </div>
+        <button class="drawer__close" type="button" data-close="authModal">✕</button>
+      </div>
+      <form class="checkoutForm adminForm" id="authForm">
+        <label>
+          <span>Пароль</span>
+          <input name="password" type="password" placeholder="Введите пароль" required />
+        </label>
+        <div class="adminModal__actions">
+          <button class="btn btn--ghost" type="button" data-close="authModal">Закрыть</button>
+          <button class="btn btn--primary" type="submit">Сохранить пароль</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</body>
+</html>
