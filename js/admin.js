@@ -151,7 +151,7 @@
     const list = getFilteredMenu();
     els.products.innerHTML = '';
     if (!state.unlocked) {
-      els.products.innerHTML = '<div class="emptyState">Введите пароль панели, чтобы загрузить и редактировать меню.</div>';
+      els.products.innerHTML = '<div class="emptyState">Доступ заблокирован</div>';
       return;
     }
     if (!list.length) {
@@ -188,7 +188,7 @@
   function renderPromotions() {
     if (!els.promoGrid) return;
     if (!state.unlocked) {
-      els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Введите пароль, чтобы увидеть и редактировать баннеры акций.</div>';
+      els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
       return;
     }
     const cards = state.promotions.map((item, index) => `
@@ -212,7 +212,7 @@
   function renderPromocodes() {
     if (!els.promoCodeList) return;
     if (!state.unlocked) {
-      els.promoCodeList.innerHTML = '<div class="emptyState emptyState--glass">Введите пароль, чтобы увидеть и редактировать промокоды.</div>';
+      els.promoCodeList.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
       return;
     }
     if (!state.promocodes.length) {
@@ -226,7 +226,7 @@
           <input type="text" data-promo-field="title" data-promo-index="${index}" value="${escapeHtml(item.title || '')}" placeholder="День рождения">
         </label>
         <label>
-          <span>Код</span>
+          <span>Промокод</span>
           <input type="text" data-promo-field="code" data-promo-index="${index}" value="${escapeHtml(item.code || '')}" placeholder="birthday">
         </label>
         <label>
