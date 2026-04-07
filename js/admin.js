@@ -821,9 +821,6 @@
       renderProducts();
       renderPromotions();
       renderPromocodes();
-      renderDeliveryZoneList();
-      fillZoneForm();
-      renderDeliveryMap();
       setBadge(els.passwordStatus, 'Введите пароль для загрузки меню', 'isWarn');
       return;
     }
@@ -835,9 +832,6 @@
     renderProducts();
     renderPromotions();
     renderPromocodes();
-    renderDeliveryZoneList();
-    fillZoneForm();
-    renderDeliveryMap();
     setBadge(els.passwordStatus, 'Пароль принят', 'isOk');
     setBadge(els.workerStatus, 'Worker отвечает', 'isOk');
     setBadge(els.repoStatus, `Источник: ${state.source}${state.repoInfo?.owner ? ` • ${state.repoInfo.owner}/${state.repoInfo.repo}` : ''}`, 'isOk');
