@@ -406,8 +406,24 @@
     return deliveryMap;
   }
 
+  function convertCoordsLonLatToLatLon(input) {
+    if (!Array.isArray(input)) return input;
+    if (input.length >= 2 && typeof input[0] === 'number' && typeof input[1] === 'number') {
+      return [input[1], input[0]];
+    }
+    return input.map(convertCoordsLonLatToLatLon);
+  }
+
+  function convertCoordsLatLonToLonLat(input) {
+    if (!Array.isArray(input)) return input;
+    if (input.length >= 2 && typeof input[0] === 'number' && typeof input[1] === 'number') {
+      return [input[1], input[0]];
+    }
+    return input.map(convertCoordsLatLonToLonLat);
+  }
+
   function getFeatureGeometry(feature) {
-    return feature?.geometry?.type === 'MultiPolygon' ? feature.geometry.coordinates : feature?.geometry?.coordinates || [[]];
+    return convertCoordsLonLatToLatLon(feature?.geometry?.coordinates || [[]]);
   }
 
   function buildZoneGeoObject(feature, index) {
@@ -432,7 +448,7 @@
       const zones = getCurrentZones();
       const target = zones.features[index];
       if (!target) return;
-      target.geometry = { type: 'Polygon', coordinates: geo.geometry.getCoordinates() };
+      target.geometry = { type: 'Polygon', coordinates: convertCoordsLatLonToLonLat(geo.geometry.getCoordinates()) };
       calcDirty();
       fillZoneForm();
     });
