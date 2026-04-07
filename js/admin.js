@@ -143,7 +143,7 @@
     const list = getFilteredMenu();
     els.products.innerHTML = '';
     if (!state.unlocked) {
-      els.products.innerHTML = '<div class="emptyState">Введите пароль панели, чтобы загрузить и редактировать меню.</div>';
+      els.products.innerHTML = '<div class="emptyState">Сытная доставка</div>';
       return;
     }
     if (!list.length) {
