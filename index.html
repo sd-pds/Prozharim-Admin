@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ПРОЖАРИМ — панель управления меню</title>
+  <title>ПРОЖАРИМ — панель управления</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="css/custom-theme.css" />
@@ -24,7 +24,7 @@
         <img class="brand__logo" src="assets/logo.png" alt="ПРОЖАРИМ" />
         <div class="brand__text">
           <div class="brand__name">ПРОЖАРИМ</div>
-          <div class="brand__sub">Панель управления меню</div>
+          <div class="brand__sub">Панель управления</div>
         </div>
       </a>
 
@@ -47,12 +47,12 @@
     <section class="hero hero--admin">
       <div class="wrap hero__grid hero__grid--single">
         <div class="hero__content">
-          <div class="pill">Отдельная админка для управления каталогом</div>
-          <h1 class="hero__title">Управление <span class="grad"><br>меню сайта</span></h1>
-          <p class="hero__desc">Добавляйте, редактируйте и удаляйте позиции. Сохранение отправляет изменения в GitHub через Cloudflare Worker.</p>
+          <div class="pill">Сытная доставка</div>
+          <h1 class="hero__title">Управление сайтом <span class="grad">Прожарим</span></h1>
+          <!--<p class="hero__desc">Добавляйте, редактируйте и удаляйте позиции. Сохранение отправляет изменения в GitHub через Cloudflare Worker.</p>-->
           <div class="hero__cta">
             <button class="btn btn--primary" id="addProductBtn" type="button">Добавить позицию</button>
-            <button class="btn btn--ghost" id="reloadBtn" type="button">Обновить из репозитория</button>
+            <button class="btn btn--ghost" id="reloadBtn" type="button">Выгрузить с сервера</button>
           </div>
           <div class="hero__stats adminStats">
             <div class="stat">
@@ -87,8 +87,8 @@
         <div class="lockScreen" id="lockScreen">
           <div class="lockScreen__card">
             <div class="lockScreen__icon"><svg viewBox="0 0 24 24"><path d="M17 8h-1V6a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 8.73V17a1 1 0 1 0 2 0v-.27a2 2 0 1 0-2 0ZM10 8V6a2 2 0 1 1 4 0v2h-4Z"/></svg></div>
-            <h3>Меню скрыто до ввода пароля</h3>
-            <p class="adminHelpText">Сначала открой доступ кнопкой с замком в шапке. После успешного ввода пароля панель загрузит меню из основного репозитория.</p>
+            <h3>ЗАБЛОКИРОВАНО</h3>
+            <p class="adminHelpText">Введите пароль для разблокировки.</p>
             <div class="lockScreen__actions">
               <button class="btn btn--primary" type="button" id="unlockBtn">Ввести пароль</button>
             </div>
@@ -108,7 +108,7 @@
       <div class="modal__head">
         <div>
           <div class="drawer__title" id="modalTitle">Новая позиция</div>
-          <div class="muted">Изменения применяются к data/menu.json и, при необходимости, к картинке товара</div>
+          <div class="muted"></div>
         </div>
         <button class="drawer__close" type="button" data-close="productModal" aria-label="Закрыть окно">✕</button>
       </div>
@@ -155,7 +155,7 @@
                 <span>Или указать путь вручную</span>
                 <input name="imgPathManual" placeholder="./assets/photos/Пицца Пепперони.webp" />
               </label>
-              <div class="adminHelpText">Если выберешь новый файл, он загрузится в основной репозиторий при сохранении позиции и автоматически подставится в товар.</div>
+              <div class="adminHelpText"></div>
             </div>
           </div>
           <label>
@@ -179,8 +179,8 @@
     <div class="modal__dialog adminModal adminModal--small">
       <div class="modal__head">
         <div>
-          <div class="drawer__title">Пароль панели</div>
-          <div class="muted">Пароль нужен для загрузки меню и сохранения изменений</div>
+          <div class="drawer__title">Пароль</div>
+          <div class="muted"></div>
         </div>
         <button class="drawer__close" type="button" data-close="authModal" aria-label="Закрыть окно">✕</button>
       </div>
