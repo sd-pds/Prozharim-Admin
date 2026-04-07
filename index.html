@@ -30,6 +30,8 @@
 
       <nav class="nav">
         <a href="#menu" class="nav__link">Меню</a>
+        <a href="#promotions" class="nav__link">Акции</a>
+        <a href="#promocodes" class="nav__link">Промокоды</a>
       </nav>
 
       <div class="adminHeaderActions">
@@ -49,24 +51,14 @@
         <div class="hero__content">
           <div class="pill">Сытная доставка</div>
           <h1 class="hero__title">Управление сайтом <span class="grad">Прожарим</span></h1>
-          <!--<p class="hero__desc">Добавляйте, редактируйте и удаляйте позиции. Сохранение отправляет изменения в GitHub через Cloudflare Worker.</p>-->
           <div class="hero__cta">
             <button class="btn btn--primary" id="addProductBtn" type="button">Добавить позицию</button>
             <button class="btn btn--ghost" id="reloadBtn" type="button">Выгрузить с сервера</button>
           </div>
           <div class="hero__stats adminStats">
-            <div class="stat">
-              <div class="stat__num" id="statTotal">0</div>
-              <div class="stat__txt">позиций</div>
-            </div>
-            <div class="stat">
-              <div class="stat__num" id="statCategories">0</div>
-              <div class="stat__txt">категорий</div>
-            </div>
-            <div class="stat">
-              <div class="stat__num" id="statChanged">0</div>
-              <div class="stat__txt">изменений</div>
-            </div>
+            <div class="stat"><div class="stat__num" id="statTotal">0</div><div class="stat__txt">позиций</div></div>
+            <div class="stat"><div class="stat__num" id="statCategories">0</div><div class="stat__txt">категорий</div></div>
+            <div class="stat"><div class="stat__num" id="statChanged">0</div><div class="stat__txt">изменений</div></div>
           </div>
         </div>
       </div>
@@ -78,24 +70,39 @@
           <h2 class="section__title">Меню</h2>
           <div class="section__tools adminTools">
             <div class="tabs" id="categoryTabs"></div>
-            <div class="search">
-              <input id="search" type="search" placeholder="Поиск по меню…" autocomplete="off">
-            </div>
+            <div class="search"><input id="search" type="search" placeholder="Поиск по меню…" autocomplete="off"></div>
           </div>
         </div>
-
         <div class="lockScreen" id="lockScreen">
           <div class="lockScreen__card">
             <div class="lockScreen__icon"><svg viewBox="0 0 24 24"><path d="M17 8h-1V6a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 8.73V17a1 1 0 1 0 2 0v-.27a2 2 0 1 0-2 0ZM10 8V6a2 2 0 1 1 4 0v2h-4Z"/></svg></div>
             <h3>ЗАБЛОКИРОВАНО</h3>
-            <p class="adminHelpText">Введите пароль для разблокировки.</p>
-            <div class="lockScreen__actions">
-              <button class="btn btn--primary" type="button" id="unlockBtn">Ввести пароль</button>
-            </div>
+            <p class="adminHelpText">Введите пароль для разблокировки и загрузки данных сайта.</p>
+            <div class="lockScreen__actions"><button class="btn btn--primary" type="button" id="unlockBtn">Ввести пароль</button></div>
           </div>
         </div>
-
         <div class="grid" id="products"></div>
+      </div>
+    </section>
+
+    <section class="section" id="promotions">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Акции</h2>
+          <div class="adminHelpText">Удаляйте ненужные баннеры и добавляйте новые. Новые изображения автоматически конвертируются в WebP.</div>
+        </div>
+        <div class="promoAdminGrid" id="promoGrid"></div>
+        <input id="promoFile" type="file" accept="image/*" hidden>
+      </div>
+    </section>
+
+    <section class="section" id="promocodes">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Промокоды</h2>
+          <button class="btn btn--ghost" id="addPromoCodeBtn" type="button">Добавить промокод</button>
+        </div>
+        <div class="promoCodeList" id="promoCodeList"></div>
       </div>
     </section>
   </main>
@@ -106,65 +113,32 @@
     <div class="modal__backdrop" data-close="productModal"></div>
     <div class="modal__dialog modal__dialog--wide adminModal">
       <div class="modal__head">
-        <div>
-          <div class="drawer__title" id="modalTitle">Новая позиция</div>
-          <div class="muted"></div>
-        </div>
+        <div><div class="drawer__title" id="modalTitle">Новая позиция</div><div class="muted"></div></div>
         <button class="drawer__close" type="button" data-close="productModal" aria-label="Закрыть окно">✕</button>
       </div>
       <form class="checkoutForm adminForm" id="productForm">
-        <input type="hidden" name="index" />
-        <input type="hidden" name="img" />
+        <input type="hidden" name="index">
+        <input type="hidden" name="img">
         <div class="grid2">
-          <label>
-            <span>ID</span>
-            <input name="id" required placeholder="pizza-pepperoni-35-sm" />
-          </label>
-          <label>
-            <span>Категория</span>
-            <input name="category" required placeholder="Пицца" />
-          </label>
-          <label class="gridSpan2">
-            <span>Название</span>
-            <input name="name" required placeholder='Пицца "Пепперони" 35 см' />
-          </label>
-          <label class="gridSpan2">
-            <span>Описание</span>
-            <textarea name="desc" rows="3" placeholder="Описание позиции"></textarea>
-          </label>
-          <label>
-            <span>Цена</span>
-            <input name="price" type="number" min="0" step="1" required placeholder="900" />
-          </label>
-          <label>
-            <span>Вес</span>
-            <input name="weight" placeholder="670 г" />
-          </label>
+          <label><span>ID</span><input name="id" required placeholder="pizza-pepperoni-35-sm"></label>
+          <label><span>Категория</span><input name="category" required placeholder="Пицца"></label>
+          <label class="gridSpan2"><span>Название</span><input name="name" required placeholder='Пицца "Пепперони" 35 см'></label>
+          <label class="gridSpan2"><span>Описание</span><textarea name="desc" rows="3" placeholder="Описание позиции"></textarea></label>
+          <label><span>Цена</span><input name="price" type="number" min="0" step="1" required placeholder="900"></label>
+          <label><span>Вес</span><input name="weight" placeholder="670 г"></label>
           <div class="gridSpan2 adminImagePanel">
             <div class="adminImagePreviewWrap">
-              <img class="adminImagePreview" id="imagePreview" src="assets/logo.png" alt="Превью изображения" />
+              <img class="adminImagePreview" id="imagePreview" src="assets/logo.png" alt="Превью изображения">
               <div class="adminHelpText" id="imagePathHint">Файл ещё не выбран</div>
             </div>
             <div class="adminFileInput">
               <div class="adminFieldTitle">Изображение</div>
-              <label>
-                <span>Загрузить новую картинку</span>
-                <input id="imageFile" type="file" accept="image/*" />
-              </label>
-              <label>
-                <span>Или указать путь вручную</span>
-                <input name="imgPathManual" placeholder="./assets/photos/Пицца Пепперони.webp" />
-              </label>
-              <div class="adminHelpText"></div>
+              <label><span>Загрузить новую картинку</span><input id="imageFile" type="file" accept="image/*"></label>
+              <label><span>Или указать путь вручную</span><input name="imgPathManual" placeholder="./assets/photos/Пицца Пепперони.webp"></label>
+              <div class="adminHelpText">Загружаемые изображения автоматически конвертируются в WebP.</div>
             </div>
           </div>
-          <label>
-            <span>Хит</span>
-            <select name="hit">
-              <option value="false">Нет</option>
-              <option value="true">Да</option>
-            </select>
-          </label>
+          <label><span>Хит</span><select name="hit"><option value="false">Нет</option><option value="true">Да</option></select></label>
         </div>
         <div class="adminModal__actions">
           <button class="btn btn--ghost" type="button" data-close="productModal">Отмена</button>
@@ -178,17 +152,11 @@
     <div class="modal__backdrop" data-close="authModal"></div>
     <div class="modal__dialog adminModal adminModal--small">
       <div class="modal__head">
-        <div>
-          <div class="drawer__title">Пароль</div>
-          <div class="muted"></div>
-        </div>
+        <div><div class="drawer__title">Пароль</div><div class="muted"></div></div>
         <button class="drawer__close" type="button" data-close="authModal" aria-label="Закрыть окно">✕</button>
       </div>
       <form class="checkoutForm adminForm" id="authForm">
-        <label>
-          <span>Пароль</span>
-          <input name="password" type="password" placeholder="Введите пароль" required />
-        </label>
+        <label><span>Пароль</span><input name="password" type="password" placeholder="Введите пароль" required></label>
         <div class="panelStatus panelStatus--inside">
           <div class="statusBadge" id="passwordStatus">Пароль не введён</div>
           <div class="statusBadge" id="workerStatus">Worker не проверен</div>

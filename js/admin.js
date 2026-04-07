@@ -9,7 +9,6 @@
     tabs: document.getElementById('categoryTabs'),
     search: document.getElementById('search'),
     toast: document.getElementById('toast'),
-    backToTop: document.getElementById('backToTop'),
     productModal: document.getElementById('productModal'),
     productForm: document.getElementById('productForm'),
     modalTitle: document.getElementById('modalTitle'),
@@ -19,6 +18,7 @@
     saveBtn: document.getElementById('saveBtn'),
     addProductBtn: document.getElementById('addProductBtn'),
     reloadBtn: document.getElementById('reloadBtn'),
+    addPromoCodeBtn: document.getElementById('addPromoCodeBtn'),
     passwordStatus: document.getElementById('passwordStatus'),
     workerStatus: document.getElementById('workerStatus'),
     repoStatus: document.getElementById('repoStatus'),
@@ -28,16 +28,23 @@
     lockScreen: document.getElementById('lockScreen'),
     imagePreview: document.getElementById('imagePreview'),
     imageFile: document.getElementById('imageFile'),
-    imagePathHint: document.getElementById('imagePathHint')
+    imagePathHint: document.getElementById('imagePathHint'),
+    promoGrid: document.getElementById('promoGrid'),
+    promoFile: document.getElementById('promoFile'),
+    promoCodeList: document.getElementById('promoCodeList')
   };
 
   const state = {
     menu: [],
+    promotions: [],
+    promocodes: [],
     originalMenuJson: '[]\n',
+    originalPromocodesJson: '[]\n',
     category: 'Все',
     query: '',
     password: sessionStorage.getItem(passwordStorageKey) || '',
     sha: '',
+    promoCodesSha: '',
     repoInfo: null,
     source: '',
     dirty: false,
@@ -88,19 +95,21 @@
   }
 
   function calcDirty() {
-    const current = JSON.stringify(state.menu, null, 2) + '\n';
-    state.dirty = current !== state.originalMenuJson;
-    els.statChanged.textContent = state.dirty ? '1+' : '0';
+    const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
+    const currentCodes = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
+    state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson;
+    if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
     document.title = `${state.dirty ? '● ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
 
   function updateStats() {
-    els.statTotal.textContent = state.menu.length;
-    els.statCategories.textContent = new Set(state.menu.map(item => item.category).filter(Boolean)).size;
+    if (els.statTotal) els.statTotal.textContent = state.menu.length;
+    if (els.statCategories) els.statCategories.textContent = new Set(state.menu.map(item => item.category).filter(Boolean)).size;
     calcDirty();
   }
 
   function renderTabs() {
+    if (!els.tabs) return;
     const cats = ['Все', ...Array.from(new Set(state.menu.map(item => item.category).filter(Boolean)))];
     els.tabs.innerHTML = '';
     cats.forEach(cat => {
@@ -121,9 +130,7 @@
     let list = state.menu.slice();
     const q = state.query.trim().toLowerCase();
     if (state.category !== 'Все') list = list.filter(item => item.category === state.category);
-    if (q) {
-      list = list.filter(item => [item.name, item.desc, item.category, item.id].some(v => String(v || '').toLowerCase().includes(q)));
-    }
+    if (q) list = list.filter(item => [item.name, item.desc, item.category, item.id].some(v => String(v || '').toLowerCase().includes(q)));
     return list;
   }
 
@@ -140,10 +147,11 @@
   }
 
   function renderProducts() {
+    if (!els.products) return;
     const list = getFilteredMenu();
     els.products.innerHTML = '';
     if (!state.unlocked) {
-      els.products.innerHTML = '<div class="emptyState"></div>';
+      els.products.innerHTML = '<div class="emptyState">Введите пароль панели, чтобы загрузить и редактировать меню.</div>';
       return;
     }
     if (!list.length) {
@@ -177,21 +185,85 @@
     });
   }
 
-function openModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.removeAttribute('hidden');
-  modal.classList.add('isOn');
-  document.body.style.overflow = 'hidden';
-}
+  function renderPromotions() {
+    if (!els.promoGrid) return;
+    if (!state.unlocked) {
+      els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Введите пароль, чтобы увидеть и редактировать баннеры акций.</div>';
+      return;
+    }
+    const cards = state.promotions.map((item, index) => `
+      <article class="promoAdminCard">
+        <img src="${escapeHtml(normalizeImg(item.path))}" alt="Акция ${index + 1}" loading="lazy">
+        <button class="iconMiniBtn iconMiniBtn--danger promoAdminDelete" type="button" data-delete-promo="${escapeHtml(item.path)}" aria-label="Удалить баннер" title="Удалить баннер">
+          <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+        </button>
+      </article>
+    `).join('');
+    els.promoGrid.innerHTML = cards + `
+      <button class="promoAdminAdd" type="button" id="promoAddTile" aria-label="Добавить баннер">
+        <span class="promoAdminAdd__icon">
+          <svg viewBox="0 0 24 24"><path d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
+        </span>
+      </button>
+    `;
+    document.getElementById('promoAddTile')?.addEventListener('click', () => els.promoFile?.click());
+  }
 
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.classList.remove('isOn');
-  modal.setAttribute('hidden', 'hidden');
-  document.body.style.overflow = '';
-}
+  function renderPromocodes() {
+    if (!els.promoCodeList) return;
+    if (!state.unlocked) {
+      els.promoCodeList.innerHTML = '<div class="emptyState emptyState--glass">Введите пароль, чтобы увидеть и редактировать промокоды.</div>';
+      return;
+    }
+    if (!state.promocodes.length) {
+      els.promoCodeList.innerHTML = '<div class="emptyState emptyState--glass">Промокодов пока нет. Добавьте первый код кнопкой выше.</div>';
+      return;
+    }
+    els.promoCodeList.innerHTML = state.promocodes.map((item, index) => `
+      <div class="promoCodeItem">
+        <label>
+          <span>Название</span>
+          <input type="text" data-promo-field="title" data-promo-index="${index}" value="${escapeHtml(item.title || '')}" placeholder="День рождения">
+        </label>
+        <label>
+          <span>Код</span>
+          <input type="text" data-promo-field="code" data-promo-index="${index}" value="${escapeHtml(item.code || '')}" placeholder="birthday">
+        </label>
+        <label>
+          <span>Скидка, %</span>
+          <input type="number" min="1" max="100" step="1" data-promo-field="percent" data-promo-index="${index}" value="${Number(item.percent || 0)}">
+        </label>
+        <label>
+          <span>Статус</span>
+          <select data-promo-field="active" data-promo-index="${index}">
+            <option value="true"${item.active !== false ? ' selected' : ''}>Активен</option>
+            <option value="false"${item.active === false ? ' selected' : ''}>Выключен</option>
+          </select>
+        </label>
+        <div class="promoCodeItem__actions">
+          <button class="iconMiniBtn iconMiniBtn--danger" type="button" data-delete-promocode="${index}" aria-label="Удалить промокод" title="Удалить промокод">
+            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.removeAttribute('hidden');
+    modal.classList.add('isOn');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('isOn');
+    modal.setAttribute('hidden', 'hidden');
+    document.body.style.overflow = '';
+  }
 
   function updateImagePreview(value) {
     if (!els.imagePreview) return;
@@ -221,23 +293,17 @@ function closeModal(id) {
   }
 
   function openCreateModal() {
-    if (!state.unlocked) {
-      openModal('authModal');
-      return;
-    }
-    els.modalTitle.textContent = 'Новая позиция';
+    if (!state.unlocked) return openModal('authModal');
+    if (els.modalTitle) els.modalTitle.textContent = 'Новая позиция';
     fillProductForm({}, '');
     openModal('productModal');
   }
 
   function openEditModal(index) {
-    if (!state.unlocked) {
-      openModal('authModal');
-      return;
-    }
+    if (!state.unlocked) return openModal('authModal');
     const item = state.menu[index];
     if (!item) return;
-    els.modalTitle.textContent = 'Редактирование позиции';
+    if (els.modalTitle) els.modalTitle.textContent = 'Редактирование позиции';
     fillProductForm(item, String(index));
     openModal('productModal');
   }
@@ -245,9 +311,9 @@ function closeModal(id) {
   function createIdFromName(name) {
     return String(name || '')
       .toLowerCase()
+      .replace(/ё/g, 'e')
       .replace(/[^a-zа-я0-9]+/gi, '-')
-      .replace(/^-+|-+$/g, '')
-      .replace(/ё/g, 'e');
+      .replace(/^-+|-+$/g, '');
   }
 
   function slugifyFileName(name) {
@@ -259,31 +325,25 @@ function closeModal(id) {
       .replace(/^-+|-+$/g, '');
   }
 
-  async function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = String(reader.result || '');
-        const match = result.match(/^data:([^;]+);base64,(.+)$/);
-        if (!match) {
-          reject(new Error('Не удалось прочитать изображение'));
-          return;
-        }
-        resolve({ mimeType: match[1], contentBase64: match[2] });
-      };
-      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-      reader.readAsDataURL(file);
-    });
+  async function convertImageToWebp(file, quality = 0.86) {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    ctx.drawImage(bitmap, 0, 0);
+    const dataUrl = canvas.toDataURL('image/webp', quality);
+    const match = dataUrl.match(/^data:image\/webp;base64,(.+)$/);
+    if (!match) throw new Error('Не удалось конвертировать изображение в WebP');
+    return { mimeType: 'image/webp', contentBase64: match[1] };
   }
 
-  async function uploadImageIfNeeded(baseName) {
-    const file = els.imageFile?.files?.[0];
-    if (!file) return String(els.productForm.elements.imgPathManual.value || els.productForm.elements.img.value || '').trim();
+  async function uploadFileToFolder(file, baseName, folder) {
+    if (!file) throw new Error('Файл не выбран');
     if (!state.password) throw new Error('Сначала введите пароль панели');
-    const prepared = await fileToBase64(file);
-    const ext = file.name.includes('.') ? file.name.split('.').pop() : (prepared.mimeType.split('/').pop() || 'webp');
-    const filename = `${slugifyFileName(baseName || file.name || 'image')}.${slugifyFileName(ext).toLowerCase()}`;
-    const data = await fetchJson(`${workerUrl}/api/upload-image`, {
+    const prepared = await convertImageToWebp(file);
+    const filename = `${slugifyFileName(baseName || file.name || 'image')}.webp`;
+    return fetchJson(`${workerUrl}/api/upload-image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -291,12 +351,19 @@ function closeModal(id) {
       },
       body: JSON.stringify({
         filename,
+        folder,
         mimeType: prepared.mimeType,
         contentBase64: prepared.contentBase64
       })
     });
-    if (els.imagePathHint) els.imagePathHint.textContent = data.path || filename;
-    return data.path || `./assets/photos/${filename}`;
+  }
+
+  async function uploadImageIfNeeded(baseName) {
+    const file = els.imageFile?.files?.[0];
+    if (!file) return String(els.productForm.elements.imgPathManual.value || els.productForm.elements.img.value || '').trim();
+    const data = await uploadFileToFolder(file, baseName || 'product', 'assets/photos');
+    if (els.imagePathHint) els.imagePathHint.textContent = data.path || '';
+    return data.path || `./assets/photos/${slugifyFileName(baseName || 'product')}.webp`;
   }
 
   async function saveProductFromForm(event) {
@@ -359,6 +426,56 @@ function closeModal(id) {
     showToast('Позиция удалена локально');
   }
 
+  function addPromoCode() {
+    state.promocodes.push({
+      title: 'Новый промокод',
+      code: `promo${Date.now().toString().slice(-5)}`,
+      percent: 10,
+      active: true
+    });
+    calcDirty();
+    renderPromocodes();
+  }
+
+  function deletePromoCode(index) {
+    if (!state.promocodes[index]) return;
+    if (!confirm('Удалить промокод?')) return;
+    state.promocodes.splice(index, 1);
+    calcDirty();
+    renderPromocodes();
+    showToast('Промокод удалён локально');
+  }
+
+  async function uploadPromotionFile(file) {
+    try {
+      const baseName = `promo-${Date.now()}`;
+      await uploadFileToFolder(file, baseName, 'assets/promos');
+      await loadPromotions();
+      showToast('Баннер загружен');
+    } catch (error) {
+      showToast(error.message || 'Ошибка загрузки баннера', true);
+    }
+  }
+
+  async function deletePromotion(path) {
+    if (!path) return;
+    if (!confirm('Удалить этот баннер акции?')) return;
+    try {
+      await fetchJson(`${workerUrl}/api/delete-file`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': state.password
+        },
+        body: JSON.stringify({ path, message: `Delete promo ${path}` })
+      });
+      await loadPromotions();
+      showToast('Баннер удалён');
+    } catch (error) {
+      showToast(error.message || 'Ошибка удаления баннера', true);
+    }
+  }
+
   async function fetchJson(url, options = {}) {
     const res = await fetch(url, options);
     const text = await res.text();
@@ -372,6 +489,37 @@ function closeModal(id) {
   }
 
   async function loadMenu() {
+    const data = await fetchJson(`${workerUrl}/api/menu`, {
+      headers: { 'x-admin-password': state.password }
+    });
+    state.menu = Array.isArray(data.menu) ? data.menu : [];
+    state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
+    state.sha = data.sha || '';
+    state.repoInfo = data.repo || null;
+    state.source = data.source || 'GitHub';
+    renderTabs();
+    renderProducts();
+  }
+
+  async function loadPromotions() {
+    const data = await fetchJson(`${workerUrl}/api/promos`, {
+      headers: { 'x-admin-password': state.password }
+    });
+    state.promotions = Array.isArray(data.items) ? data.items : [];
+    renderPromotions();
+  }
+
+  async function loadPromocodes() {
+    const data = await fetchJson(`${workerUrl}/api/promocodes`, {
+      headers: { 'x-admin-password': state.password }
+    });
+    state.promocodes = Array.isArray(data.promocodes) ? data.promocodes : [];
+    state.originalPromocodesJson = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
+    state.promoCodesSha = data.sha || '';
+    renderPromocodes();
+  }
+
+  async function loadAll() {
     if (!workerUrl || workerUrl.includes('REPLACE-WITH-YOUR-WORKER')) {
       setBadge(els.workerStatus, 'Укажите workerUrl в js/config.js', 'isWarn');
       showToast('Сначала настройте js/config.js', true);
@@ -381,30 +529,64 @@ function closeModal(id) {
       state.unlocked = false;
       updateLockScreen();
       renderProducts();
+      renderPromotions();
+      renderPromocodes();
       setBadge(els.passwordStatus, 'Введите пароль для загрузки меню', 'isWarn');
       return;
     }
     setBadge(els.workerStatus, 'Проверка доступа...', 'isWarn');
-    const data = await fetchJson(`${workerUrl}/api/menu`, {
-      headers: { 'x-admin-password': state.password }
-    });
+    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes()]);
     state.unlocked = true;
-    state.menu = Array.isArray(data.menu) ? data.menu : [];
-    state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
-    state.sha = data.sha || '';
-    state.repoInfo = data.repo || null;
-    state.source = data.source || 'GitHub';
     updateStats();
-    renderTabs();
-    renderProducts();
     updateLockScreen();
+    renderProducts();
+    renderPromotions();
+    renderPromocodes();
     setBadge(els.passwordStatus, 'Пароль принят', 'isOk');
     setBadge(els.workerStatus, 'Worker отвечает', 'isOk');
     setBadge(els.repoStatus, `Источник: ${state.source}${state.repoInfo?.owner ? ` • ${state.repoInfo.owner}/${state.repoInfo.repo}` : ''}`, 'isOk');
-    showToast('Меню загружено');
+    showToast('Данные загружены');
+  }
+
+  async function savePromocodes() {
+    const currentCodes = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
+    if (currentCodes === state.originalPromocodesJson) return;
+    const data = await fetchJson(`${workerUrl}/api/promocodes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': state.password
+      },
+      body: JSON.stringify({
+        promocodes: state.promocodes,
+        sha: state.promoCodesSha,
+        message: `Update promocodes from admin panel ${new Date().toISOString()}`
+      })
+    });
+    state.promoCodesSha = data.sha || state.promoCodesSha;
+    state.originalPromocodesJson = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
   }
 
   async function saveMenu() {
+    const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
+    if (currentMenu === state.originalMenuJson) return;
+    const data = await fetchJson(`${workerUrl}/api/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': state.password
+      },
+      body: JSON.stringify({
+        menu: state.menu,
+        sha: state.sha,
+        message: `Update menu from admin panel ${new Date().toISOString()}`
+      })
+    });
+    state.sha = data.sha || state.sha;
+    state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
+  }
+
+  async function saveAll() {
     if (!state.password) {
       openModal('authModal');
       showToast('Сначала введите пароль', true);
@@ -424,22 +606,10 @@ function closeModal(id) {
     }
     els.saveBtn.disabled = true;
     try {
-      const data = await fetchJson(`${workerUrl}/api/save`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': state.password
-        },
-        body: JSON.stringify({
-          menu: state.menu,
-          sha: state.sha,
-          message: `Update menu from admin panel ${new Date().toISOString()}`
-        })
-      });
-      state.sha = data.sha || state.sha;
-      state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
+      await saveMenu();
+      await savePromocodes();
       updateStats();
-      setBadge(els.repoStatus, `Сохранено: ${data.commit?.slice(0, 7) || 'ok'}`, 'isOk');
+      setBadge(els.repoStatus, 'Сохранено в GitHub', 'isOk');
       showToast('Изменения отправлены в GitHub');
     } catch (error) {
       showToast(error.message || 'Ошибка сохранения', true);
@@ -451,14 +621,20 @@ function closeModal(id) {
   function resetLockedState() {
     state.unlocked = false;
     state.menu = [];
+    state.promotions = [];
+    state.promocodes = [];
     state.sha = '';
+    state.promoCodesSha = '';
     state.source = '';
     state.repoInfo = null;
     state.originalMenuJson = '[]\n';
+    state.originalPromocodesJson = '[]\n';
     state.category = 'Все';
     updateStats();
     renderTabs();
     renderProducts();
+    renderPromotions();
+    renderPromocodes();
     updateLockScreen();
     setBadge(els.workerStatus, 'Ожидает авторизацию', 'isWarn');
     setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
@@ -480,7 +656,7 @@ function closeModal(id) {
     state.password = password;
     sessionStorage.setItem(passwordStorageKey, password);
     try {
-      await loadMenu();
+      await loadAll();
       closeModal('authModal');
       showToast('Пароль принят');
     } catch (error) {
@@ -493,19 +669,46 @@ function closeModal(id) {
   }
 
   function bindEvents() {
-    els.search.addEventListener('input', (e) => {
+    els.search?.addEventListener('input', (e) => {
       state.query = e.target.value || '';
       renderProducts();
     });
 
-    els.products.addEventListener('click', (e) => {
+    els.products?.addEventListener('click', (e) => {
       const editBtn = e.target.closest('[data-edit]');
       const deleteBtn = e.target.closest('[data-delete]');
       if (editBtn) openEditModal(Number(editBtn.dataset.edit));
       if (deleteBtn) deleteItem(Number(deleteBtn.dataset.delete));
     });
 
+    els.promoGrid?.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('[data-delete-promo]');
+      if (deleteBtn) deletePromotion(deleteBtn.dataset.deletePromo);
+    });
+
+    els.promoCodeList?.addEventListener('input', (e) => {
+      const field = e.target.dataset.promoField;
+      const index = Number(e.target.dataset.promoIndex);
+      if (!field || Number.isNaN(index) || !state.promocodes[index]) return;
+      let value = e.target.value;
+      if (field === 'percent') value = Number(value || 0);
+      if (field === 'active') value = String(value) === 'true';
+      state.promocodes[index][field] = value;
+      calcDirty();
+    });
+
+    els.promoCodeList?.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('[data-delete-promocode]');
+      if (deleteBtn) deletePromoCode(Number(deleteBtn.dataset.deletePromocode));
+    });
+
     document.getElementById('unlockBtn')?.addEventListener('click', () => openModal('authModal'));
+    els.addPromoCodeBtn?.addEventListener('click', addPromoCode);
+    els.promoFile?.addEventListener('change', () => {
+      const file = els.promoFile.files?.[0];
+      if (file) uploadPromotionFile(file);
+      els.promoFile.value = '';
+    });
 
     els.imageFile?.addEventListener('change', () => {
       const file = els.imageFile.files?.[0];
@@ -513,33 +716,30 @@ function closeModal(id) {
         updateImagePreview(els.productForm.elements.img.value || '');
         return;
       }
-      if (els.imagePathHint) els.imagePathHint.textContent = `Выбран файл: ${file.name}`;
+      if (els.imagePathHint) els.imagePathHint.textContent = `Выбран файл: ${file.name} → будет .webp`;
       const tempUrl = URL.createObjectURL(file);
       els.imagePreview.src = tempUrl;
     });
 
-    els.productForm.elements.imgPathManual?.addEventListener('input', (e) => { els.productForm.elements.img.value = e.target.value; updateImagePreview(e.target.value); });
+    els.productForm?.addEventListener('submit', saveProductFromForm);
+    els.authForm?.addEventListener('submit', handleAuthSubmit);
+    els.authBtn?.addEventListener('click', () => openModal('authModal'));
+    els.saveBtn?.addEventListener('click', saveAll);
+    els.addProductBtn?.addEventListener('click', openCreateModal);
+    els.reloadBtn?.addEventListener('click', loadAll);
 
-    els.productForm.addEventListener('submit', (e) => {
-      saveProductFromForm(e).catch(error => showToast(error.message || 'Ошибка сохранения позиции', true));
-    });
-    els.authForm.addEventListener('submit', (e) => {
-      handleAuthSubmit(e).catch(error => showToast(error.message || 'Ошибка авторизации', true));
-    });
-    els.authBtn.addEventListener('click', () => openModal('authModal'));
-    els.saveBtn.addEventListener('click', saveMenu);
-    els.addProductBtn.addEventListener('click', openCreateModal);
-    els.reloadBtn.addEventListener('click', () => loadMenu().catch(err => showToast(err.message, true)));
-    els.backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-    document.querySelectorAll('[data-close]').forEach(el => {
-      el.addEventListener('click', () => closeModal(el.dataset.close));
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal('productModal');
         closeModal('authModal');
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveAll();
       }
     });
 
@@ -551,20 +751,13 @@ function closeModal(id) {
   }
 
   function init() {
-    setBadge(els.passwordStatus, state.password ? 'Пароль сохранён в сессии' : 'Пароль не введён', state.password ? 'isOk' : 'isWarn');
-    setBadge(els.workerStatus, workerUrl && !workerUrl.includes('REPLACE-WITH-YOUR-WORKER') ? 'Worker настроен' : 'Укажите workerUrl в js/config.js', workerUrl && !workerUrl.includes('REPLACE-WITH-YOUR-WORKER') ? 'isOk' : 'isWarn');
-    setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
     bindEvents();
     resetLockedState();
-    if (state.password) {
-      loadMenu().catch(error => {
-        sessionStorage.removeItem(passwordStorageKey);
-        state.password = '';
-        resetLockedState();
-        setBadge(els.passwordStatus, 'Введите пароль заново', 'isWarn');
-        showToast(error.message || 'Не удалось загрузить меню', true);
-      });
-    }
+    if (state.password) loadAll().catch(() => {
+      sessionStorage.removeItem(passwordStorageKey);
+      state.password = '';
+      resetLockedState();
+    });
   }
 
   init();
