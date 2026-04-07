@@ -254,3 +254,29 @@
   .promoAdminGrid{ grid-template-columns:1fr; }
   .promoCodeItem{ grid-template-columns:1fr; }
 }
+
+.adminStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px}
+.deliveryTools{display:grid;gap:14px}
+@media(min-width:980px){.deliveryTools{grid-template-columns:1fr auto;align-items:center}}
+.deliveryToolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.deliveryEditor{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+.deliverySidebar,.deliveryMapCard,.deliveryFormCard{border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));border-radius:26px;box-shadow:var(--shadow)}
+.deliverySidebar{padding:18px;position:sticky;top:92px;display:grid;gap:14px}
+.deliverySidebar__title{font-size:18px;font-weight:700}
+.deliveryZoneList{display:grid;gap:10px;max-height:560px;overflow:auto;padding-right:2px}
+.deliveryZoneItem{width:100%;text-align:left;padding:14px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text);display:grid;gap:4px;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.deliveryZoneItem:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.16)}
+.deliveryZoneItem.isOn{border-color:rgba(255,106,61,.34);background:rgba(255,106,61,.12)}
+.deliveryZoneItem__name{font-weight:700}
+.deliveryZoneItem__meta{font-size:13px;color:var(--muted)}
+.deliveryMain{display:grid;gap:18px}
+.deliveryMapCard{padding:14px}
+.deliveryMap{width:100%;height:520px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.03)}
+.deliveryFormCard{padding:18px;display:grid;gap:16px}
+.deliveryFormCard__head{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.deliveryFormGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.deliveryFormGrid label{display:grid;gap:8px}
+.deliveryFormGrid input{width:100%;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);padding:14px 15px;font:inherit}
+.deliveryFormActions{display:flex;justify-content:flex-end;gap:10px}
+@media(max-width:1100px){.deliveryEditor{grid-template-columns:1fr}.deliverySidebar{position:static}.deliveryFormGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.deliveryFormGrid{grid-template-columns:1fr}.deliveryMap{height:400px}.deliveryToolbar{justify-content:flex-start}}

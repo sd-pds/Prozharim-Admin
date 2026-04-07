@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css" />
   <script src="js/config.js"></script>
+  <script defer src="https://api-maps.yandex.ru/2.1/?apikey=62bb0bf1-3235-41f0-b3de-b09cfed11b52&lang=ru_RU"></script>
   <script defer src="js/admin.js"></script>
 </head>
 <body>
@@ -31,6 +32,7 @@
       <nav class="nav">
         <a href="#menu" class="nav__link">Меню</a>
         <a href="#promotions" class="nav__link">Акции</a>
+        <a href="#delivery" class="nav__link">Доставка</a>
         <a href="#promocodes" class="nav__link">Промокоды</a>
       </nav>
 
@@ -58,6 +60,8 @@
           <div class="hero__stats adminStats">
             <div class="stat"><div class="stat__num" id="statTotal">0</div><div class="stat__txt">позиций</div></div>
             <div class="stat"><div class="stat__num" id="statCategories">0</div><div class="stat__txt">категорий</div></div>
+            <div class="stat"><div class="stat__num" id="statPromotions">0</div><div class="stat__txt">акций</div></div>
+            <div class="stat"><div class="stat__num" id="statPromocodes">0</div><div class="stat__txt">промокодов</div></div>
             <div class="stat"><div class="stat__num" id="statChanged">0</div><div class="stat__txt">изменений</div></div>
           </div>
         </div>
@@ -93,6 +97,56 @@
         </div>
         <div class="promoAdminGrid" id="promoGrid"></div>
         <input id="promoFile" type="file" accept="image/*" hidden>
+      </div>
+    </section>
+
+
+    <section class="section" id="delivery">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Доставка</h2>
+          <div class="section__tools deliveryTools">
+            <div class="tabs" id="deliveryModeTabs"></div>
+            <div class="deliveryToolbar">
+              <button class="btn btn--ghost" id="addZoneBtn" type="button">Добавить зону</button>
+              <button class="btn btn--ghost" id="editZoneGeometryBtn" type="button">Править границы</button>
+              <button class="btn btn--ghost" id="finishZoneGeometryBtn" type="button">Завершить</button>
+            </div>
+          </div>
+        </div>
+        <div class="deliveryEditor">
+          <aside class="deliverySidebar">
+            <div class="deliverySidebar__head">
+              <div>
+                <div class="deliverySidebar__title">Список зон</div>
+                <div class="adminHelpText" id="deliveryModeHint">Дневные зоны доставки</div>
+              </div>
+            </div>
+            <div class="deliveryZoneList" id="deliveryZoneList"></div>
+          </aside>
+          <div class="deliveryMain">
+            <div class="deliveryMapCard">
+              <div id="deliveryMap" class="deliveryMap"></div>
+            </div>
+            <div class="deliveryFormCard">
+              <div class="deliveryFormCard__head">
+                <div>
+                  <div class="deliverySidebar__title">Параметры зоны</div>
+                  <div class="adminHelpText">Редактирование имени зоны, ресторана и стоимости доставки</div>
+                </div>
+              </div>
+              <div class="deliveryFormGrid" id="deliveryFormGrid">
+                <label><span>Название зоны</span><input id="zoneNameInput" type="text" placeholder="Ф1 - Линия"></label>
+                <label><span>Ресторан</span><input id="zoneRestaurantInput" type="text" placeholder="27 Линия 60"></label>
+                <label><span>Стоимость доставки, ₽</span><input id="zonePriceInput" type="number" min="0" step="1" placeholder="0"></label>
+              </div>
+              <div class="adminHelpText" id="zoneGeometryHint">Выберите зону слева или добавьте новую.</div>
+              <div class="deliveryFormActions">
+                <button class="btn btn--ghost" id="deleteZoneBtn" type="button">Удалить зону</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 

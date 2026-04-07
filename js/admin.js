@@ -31,7 +31,21 @@
     imagePathHint: document.getElementById('imagePathHint'),
     promoGrid: document.getElementById('promoGrid'),
     promoFile: document.getElementById('promoFile'),
-    promoCodeList: document.getElementById('promoCodeList')
+    promoCodeList: document.getElementById('promoCodeList'),
+    statPromotions: document.getElementById('statPromotions'),
+    statPromocodes: document.getElementById('statPromocodes'),
+    deliveryModeTabs: document.getElementById('deliveryModeTabs'),
+    deliveryModeHint: document.getElementById('deliveryModeHint'),
+    deliveryZoneList: document.getElementById('deliveryZoneList'),
+    zoneNameInput: document.getElementById('zoneNameInput'),
+    zoneRestaurantInput: document.getElementById('zoneRestaurantInput'),
+    zonePriceInput: document.getElementById('zonePriceInput'),
+    zoneGeometryHint: document.getElementById('zoneGeometryHint'),
+    addZoneBtn: document.getElementById('addZoneBtn'),
+    editZoneGeometryBtn: document.getElementById('editZoneGeometryBtn'),
+    finishZoneGeometryBtn: document.getElementById('finishZoneGeometryBtn'),
+    deleteZoneBtn: document.getElementById('deleteZoneBtn'),
+    deliveryMap: document.getElementById('deliveryMap')
   };
 
   const state = {
@@ -48,7 +62,15 @@
     repoInfo: null,
     source: '',
     dirty: false,
-    unlocked: false
+    unlocked: false,
+    deliveryMode: 'day',
+    deliveryZonesDay: { type: 'FeatureCollection', features: [] },
+    deliveryZonesNight: { type: 'FeatureCollection', features: [] },
+    deliveryZonesDaySha: '',
+    deliveryZonesNightSha: '',
+    originalZonesDayJson: '{\n  "type": "FeatureCollection",\n  "features": []\n}\n',
+    originalZonesNightJson: '{\n  "type": "FeatureCollection",\n  "features": []\n}\n',
+    selectedZoneIndex: -1
   };
 
   function escapeHtml(value) {
@@ -97,7 +119,9 @@
   function calcDirty() {
     const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
     const currentCodes = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
-    state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson;
+    const currentZonesDay = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
+    const currentZonesNight = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
+    state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
     document.title = `${state.dirty ? '● ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
@@ -105,7 +129,108 @@
   function updateStats() {
     if (els.statTotal) els.statTotal.textContent = state.menu.length;
     if (els.statCategories) els.statCategories.textContent = new Set(state.menu.map(item => item.category).filter(Boolean)).size;
+    if (els.statPromotions) els.statPromotions.textContent = state.promotions.length;
+    if (els.statPromocodes) els.statPromocodes.textContent = state.promocodes.length;
     calcDirty();
+  }
+
+
+
+  function emptyFeatureCollection() {
+    return { type: 'FeatureCollection', features: [] };
+  }
+
+  function normalizeFeatureCollection(data) {
+    const fc = data && typeof data === 'object' ? structuredClone(data) : emptyFeatureCollection();
+    if (fc.type !== 'FeatureCollection' || !Array.isArray(fc.features)) return emptyFeatureCollection();
+    fc.features = fc.features.map((feature, index) => ({
+      type: 'Feature',
+      properties: {
+        zone: feature?.properties?.zone || `Зона ${index + 1}`,
+        restaurant: feature?.properties?.restaurant || '',
+        deliveryPrice: Number(feature?.properties?.deliveryPrice || 0)
+      },
+      geometry: feature?.geometry?.type ? feature.geometry : { type: 'Polygon', coordinates: [[]] }
+    }));
+    return fc;
+  }
+
+  function getCurrentZones() {
+    return state.deliveryMode === 'night' ? state.deliveryZonesNight : state.deliveryZonesDay;
+  }
+
+  function setCurrentZones(next) {
+    if (state.deliveryMode === 'night') state.deliveryZonesNight = next;
+    else state.deliveryZonesDay = next;
+  }
+
+  function zoneLabel(feature, index) {
+    const price = Number(feature?.properties?.deliveryPrice || 0);
+    return `${feature?.properties?.zone || `Зона ${index + 1}`} • ${price} ₽`;
+  }
+
+  function getSelectedZone() {
+    return getCurrentZones().features?.[state.selectedZoneIndex] || null;
+  }
+
+  function setDeliveryMode(mode) {
+    state.deliveryMode = mode === 'night' ? 'night' : 'day';
+    state.selectedZoneIndex = -1;
+    renderDeliveryModeTabs();
+    renderDeliveryZoneList();
+    fillZoneForm();
+    renderDeliveryMap();
+  }
+
+  function renderDeliveryModeTabs() {
+    if (!els.deliveryModeTabs) return;
+    els.deliveryModeTabs.innerHTML = '';
+    [['day', 'День'], ['night', 'Ночь']].forEach(([value, label]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab' + (state.deliveryMode === value ? ' isOn' : '');
+      btn.textContent = label;
+      btn.addEventListener('click', () => setDeliveryMode(value));
+      els.deliveryModeTabs.appendChild(btn);
+    });
+    if (els.deliveryModeHint) els.deliveryModeHint.textContent = state.deliveryMode === 'night' ? 'Ночные зоны доставки' : 'Дневные зоны доставки';
+  }
+
+  function renderDeliveryZoneList() {
+    if (!els.deliveryZoneList) return;
+    if (!state.unlocked) {
+      els.deliveryZoneList.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
+      return;
+    }
+    const zones = getCurrentZones().features || [];
+    if (!zones.length) {
+      els.deliveryZoneList.innerHTML = '<div class="emptyState emptyState--glass">Зон пока нет. Добавьте первую зону кнопкой выше.</div>';
+      return;
+    }
+    els.deliveryZoneList.innerHTML = zones.map((feature, index) => `
+      <button class="deliveryZoneItem${index === state.selectedZoneIndex ? ' isOn' : ''}" type="button" data-zone-index="${index}">
+        <span class="deliveryZoneItem__name">${escapeHtml(feature?.properties?.zone || `Зона ${index + 1}`)}</span>
+        <span class="deliveryZoneItem__meta">${escapeHtml(feature?.properties?.restaurant || 'Без ресторана')} • ${Number(feature?.properties?.deliveryPrice || 0)} ₽</span>
+      </button>
+    `).join('');
+  }
+
+  function fillZoneForm() {
+    const feature = getSelectedZone();
+    const disabled = !feature;
+    [els.zoneNameInput, els.zoneRestaurantInput, els.zonePriceInput, els.editZoneGeometryBtn, els.finishZoneGeometryBtn, els.deleteZoneBtn].forEach(el => { if (el) el.disabled = disabled; });
+    if (!feature) {
+      if (els.zoneNameInput) els.zoneNameInput.value = '';
+      if (els.zoneRestaurantInput) els.zoneRestaurantInput.value = '';
+      if (els.zonePriceInput) els.zonePriceInput.value = '';
+      if (els.zoneGeometryHint) els.zoneGeometryHint.textContent = 'Выберите зону слева или добавьте новую.';
+      return;
+    }
+    if (els.zoneNameInput) els.zoneNameInput.value = feature.properties?.zone || '';
+    if (els.zoneRestaurantInput) els.zoneRestaurantInput.value = feature.properties?.restaurant || '';
+    if (els.zonePriceInput) els.zonePriceInput.value = Number(feature.properties?.deliveryPrice || 0);
+    const coords = feature.geometry?.coordinates?.[0]?.length || feature.geometry?.coordinates?.[0]?.[0]?.length || 0;
+    if (els.zoneGeometryHint) els.zoneGeometryHint.textContent = coords ? `Точек в полигоне: ${coords}` : 'Полигон пока не нарисован. Нажмите «Править границы».';
   }
 
   function renderTabs() {
@@ -247,6 +372,149 @@
         </div>
       </div>
     `).join('');
+  }
+
+
+
+  let deliveryMap = null;
+  let deliveryCollection = null;
+
+  function ymapsReadyAdmin() {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      (function wait() {
+        if (window.ymaps && typeof window.ymaps.ready === 'function') {
+          window.ymaps.ready(() => resolve(window.ymaps));
+          return;
+        }
+        if (Date.now() - start > 20000) {
+          reject(new Error('Yandex Maps не загрузилась'));
+          return;
+        }
+        setTimeout(wait, 60);
+      })();
+    });
+  }
+
+  async function ensureDeliveryMap() {
+    if (!els.deliveryMap || deliveryMap) return deliveryMap;
+    const ymaps = await ymapsReadyAdmin();
+    deliveryMap = new ymaps.Map('deliveryMap', { center: [51.7682, 55.0968], zoom: 11, controls: ['zoomControl'] }, { suppressMapOpenBlock: true });
+    deliveryCollection = new ymaps.GeoObjectCollection();
+    deliveryMap.geoObjects.add(deliveryCollection);
+    renderDeliveryMap();
+    return deliveryMap;
+  }
+
+  function getFeatureGeometry(feature) {
+    return feature?.geometry?.type === 'MultiPolygon' ? feature.geometry.coordinates : feature?.geometry?.coordinates || [[]];
+  }
+
+  function buildZoneGeoObject(feature, index) {
+    const ymaps = window.ymaps;
+    const active = index === state.selectedZoneIndex;
+    const fill = active ? 'rgba(255,106,61,0.34)' : (state.deliveryMode === 'night' ? 'rgba(85,145,255,0.22)' : 'rgba(71,195,110,0.20)');
+    const stroke = active ? '#ff6a3d' : (state.deliveryMode === 'night' ? '#7da7ff' : '#4fd48f');
+    const geo = new ymaps.Polygon(getFeatureGeometry(feature), { balloonContent: zoneLabel(feature, index) }, {
+      fillColor: fill,
+      strokeColor: stroke,
+      strokeWidth: active ? 4 : 3,
+      opacity: 0.95,
+      editorDrawingCursor: 'crosshair'
+    });
+    geo.events.add('click', () => {
+      state.selectedZoneIndex = index;
+      renderDeliveryZoneList();
+      fillZoneForm();
+      renderDeliveryMap();
+    });
+    geo.geometry.events.add('change', () => {
+      const zones = getCurrentZones();
+      const target = zones.features[index];
+      if (!target) return;
+      target.geometry = { type: 'Polygon', coordinates: geo.geometry.getCoordinates() };
+      calcDirty();
+      fillZoneForm();
+    });
+    return geo;
+  }
+
+  async function renderDeliveryMap() {
+    if (!state.unlocked || !els.deliveryMap || !window.ymaps || !deliveryCollection) return;
+    deliveryCollection.removeAll();
+    const zones = getCurrentZones().features || [];
+    const bounds = [];
+    zones.forEach((feature, index) => {
+      const geo = buildZoneGeoObject(feature, index);
+      deliveryCollection.add(geo);
+      try {
+        const b = geo.geometry.getBounds();
+        if (b) bounds.push(b[0], b[1]);
+      } catch {}
+    });
+    if (bounds.length && deliveryMap) {
+      try { deliveryMap.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 }); } catch {}
+    }
+  }
+
+  function updateZoneField(field, value) {
+    const feature = getSelectedZone();
+    if (!feature) return;
+    if (!feature.properties) feature.properties = {};
+    feature.properties[field] = field === 'deliveryPrice' ? Number(value || 0) : value;
+    calcDirty();
+    renderDeliveryZoneList();
+    renderDeliveryMap();
+  }
+
+  async function createZone() {
+    if (!state.unlocked) return openModal('authModal');
+    const zones = getCurrentZones();
+    const feature = {
+      type: 'Feature',
+      properties: { zone: `Новая зона ${zones.features.length + 1}`, restaurant: '', deliveryPrice: 0 },
+      geometry: { type: 'Polygon', coordinates: [[]] }
+    };
+    zones.features.push(feature);
+    state.selectedZoneIndex = zones.features.length - 1;
+    calcDirty();
+    renderDeliveryZoneList();
+    fillZoneForm();
+    await ensureDeliveryMap();
+    renderDeliveryMap();
+    setTimeout(startGeometryEditing, 80);
+  }
+
+  function startGeometryEditing() {
+    if (!deliveryCollection || state.selectedZoneIndex < 0) return;
+    const geo = deliveryCollection.get(state.selectedZoneIndex);
+    if (!geo?.editor) return;
+    try {
+      geo.editor.startDrawing();
+    } catch {
+      try { geo.editor.startEditing(); } catch {}
+    }
+  }
+
+  function finishGeometryEditing() {
+    if (!deliveryCollection || state.selectedZoneIndex < 0) return;
+    const geo = deliveryCollection.get(state.selectedZoneIndex);
+    if (!geo?.editor) return;
+    try { geo.editor.stopDrawing(); } catch {}
+    try { geo.editor.stopEditing(); } catch {}
+  }
+
+  function deleteSelectedZone() {
+    const zones = getCurrentZones();
+    const feature = getSelectedZone();
+    if (!feature) return;
+    if (!confirm(`Удалить зону «${feature.properties?.zone || 'Без названия'}»?`)) return;
+    zones.features.splice(state.selectedZoneIndex, 1);
+    state.selectedZoneIndex = -1;
+    calcDirty();
+    renderDeliveryZoneList();
+    fillZoneForm();
+    renderDeliveryMap();
   }
 
   function openModal(id) {
@@ -433,7 +701,7 @@
       percent: 10,
       active: true
     });
-    calcDirty();
+    updateStats();
     renderPromocodes();
   }
 
@@ -441,7 +709,7 @@
     if (!state.promocodes[index]) return;
     if (!confirm('Удалить промокод?')) return;
     state.promocodes.splice(index, 1);
-    calcDirty();
+    updateStats();
     renderPromocodes();
     showToast('Промокод удалён локально');
   }
@@ -506,6 +774,7 @@
       headers: { 'x-admin-password': state.password }
     });
     state.promotions = Array.isArray(data.items) ? data.items : [];
+    updateStats();
     renderPromotions();
   }
 
@@ -516,7 +785,28 @@
     state.promocodes = Array.isArray(data.promocodes) ? data.promocodes : [];
     state.originalPromocodesJson = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
     state.promoCodesSha = data.sha || '';
+    updateStats();
     renderPromocodes();
+  }
+
+
+
+  async function loadDeliveryZones() {
+    const data = await fetchJson(`${workerUrl}/api/delivery-zones`, {
+      headers: { 'x-admin-password': state.password }
+    });
+    state.deliveryZonesDay = normalizeFeatureCollection(data.day);
+    state.deliveryZonesNight = normalizeFeatureCollection(data.night);
+    state.deliveryZonesDaySha = data.daySha || '';
+    state.deliveryZonesNightSha = data.nightSha || '';
+    state.originalZonesDayJson = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
+    state.originalZonesNightJson = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
+    state.selectedZoneIndex = -1;
+    renderDeliveryModeTabs();
+    renderDeliveryZoneList();
+    fillZoneForm();
+    await ensureDeliveryMap();
+    renderDeliveryMap();
   }
 
   async function loadAll() {
@@ -535,7 +825,7 @@
       return;
     }
     setBadge(els.workerStatus, 'Проверка доступа...', 'isWarn');
-    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes()]);
+    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes(), loadDeliveryZones()]);
     state.unlocked = true;
     updateStats();
     updateLockScreen();
@@ -586,6 +876,32 @@
     state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
   }
 
+
+
+  async function saveDeliveryZones() {
+    const currentDay = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
+    const currentNight = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
+    if (currentDay === state.originalZonesDayJson && currentNight === state.originalZonesNightJson) return;
+    const data = await fetchJson(`${workerUrl}/api/delivery-zones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': state.password
+      },
+      body: JSON.stringify({
+        day: state.deliveryZonesDay,
+        night: state.deliveryZonesNight,
+        daySha: state.deliveryZonesDaySha,
+        nightSha: state.deliveryZonesNightSha,
+        message: `Update delivery zones from admin panel ${new Date().toISOString()}`
+      })
+    });
+    state.deliveryZonesDaySha = data.daySha || state.deliveryZonesDaySha;
+    state.deliveryZonesNightSha = data.nightSha || state.deliveryZonesNightSha;
+    state.originalZonesDayJson = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
+    state.originalZonesNightJson = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
+  }
+
   async function saveAll() {
     if (!state.password) {
       openModal('authModal');
@@ -608,6 +924,7 @@
     try {
       await saveMenu();
       await savePromocodes();
+      await saveDeliveryZones();
       updateStats();
       setBadge(els.repoStatus, 'Сохранено в GitHub', 'isOk');
       showToast('Изменения отправлены в GitHub');
@@ -629,12 +946,23 @@
     state.repoInfo = null;
     state.originalMenuJson = '[]\n';
     state.originalPromocodesJson = '[]\n';
+    state.originalZonesDayJson = '{\n  "type": "FeatureCollection",\n  "features": []\n}\n';
+    state.originalZonesNightJson = '{\n  "type": "FeatureCollection",\n  "features": []\n}\n';
+    state.deliveryZonesDay = emptyFeatureCollection();
+    state.deliveryZonesNight = emptyFeatureCollection();
+    state.deliveryZonesDaySha = '';
+    state.deliveryZonesNightSha = '';
+    state.selectedZoneIndex = -1;
     state.category = 'Все';
     updateStats();
     renderTabs();
     renderProducts();
     renderPromotions();
     renderPromocodes();
+    renderDeliveryModeTabs();
+    renderDeliveryZoneList();
+    fillZoneForm();
+    renderDeliveryMap();
     updateLockScreen();
     setBadge(els.workerStatus, 'Ожидает авторизацию', 'isWarn');
     setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
@@ -646,7 +974,8 @@
     if (!password) {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
-      resetLockedState();
+      renderDeliveryModeTabs();
+    resetLockedState();
       setBadge(els.passwordStatus, 'Пароль не введён', 'isWarn');
       closeModal('authModal');
       showToast('Пароль очищен');
@@ -697,6 +1026,15 @@
       calcDirty();
     });
 
+    els.deliveryZoneList?.addEventListener('click', (e) => {
+      const zoneBtn = e.target.closest('[data-zone-index]');
+      if (!zoneBtn) return;
+      state.selectedZoneIndex = Number(zoneBtn.dataset.zoneIndex);
+      renderDeliveryZoneList();
+      fillZoneForm();
+      renderDeliveryMap();
+    });
+
     els.promoCodeList?.addEventListener('click', (e) => {
       const deleteBtn = e.target.closest('[data-delete-promocode]');
       if (deleteBtn) deletePromoCode(Number(deleteBtn.dataset.deletePromocode));
@@ -704,6 +1042,13 @@
 
     document.getElementById('unlockBtn')?.addEventListener('click', () => openModal('authModal'));
     els.addPromoCodeBtn?.addEventListener('click', addPromoCode);
+    els.addZoneBtn?.addEventListener('click', createZone);
+    els.editZoneGeometryBtn?.addEventListener('click', startGeometryEditing);
+    els.finishZoneGeometryBtn?.addEventListener('click', finishGeometryEditing);
+    els.deleteZoneBtn?.addEventListener('click', deleteSelectedZone);
+    els.zoneNameInput?.addEventListener('input', (e) => updateZoneField('zone', e.target.value));
+    els.zoneRestaurantInput?.addEventListener('input', (e) => updateZoneField('restaurant', e.target.value));
+    els.zonePriceInput?.addEventListener('input', (e) => updateZoneField('deliveryPrice', e.target.value));
     els.promoFile?.addEventListener('change', () => {
       const file = els.promoFile.files?.[0];
       if (file) uploadPromotionFile(file);
