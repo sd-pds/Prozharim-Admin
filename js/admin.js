@@ -162,14 +162,14 @@
             <div class="adminProductCard__content">
               <div class="card__cat">${escapeHtml(item.category || 'Без категории')}</div>
               <div class="card__name">${escapeHtml(item.name || 'Без названия')}</div>
-              <div class="card__desc">${escapeHtml(item.desc || 'Описание не заполнено')}</div>
-              <div class="adminProductCard__footer">
-                <div class="adminProductCard__meta">
-                  <div class="price">${Number(item.price || 0)} ₽</div>
-                  <div class="meta">${escapeHtml(item.weight || 'Без веса')}${item.hit ? ' • Хит' : ''}</div>
-                </div>
-                ${cardActions(originalIndex)}
+            </div>
+            <div class="adminProductCard__bottom">
+              <div class="adminProductCard__meta">
+                <div class="card__desc">${escapeHtml(item.desc || 'Описание не заполнено')}</div>
+                <div class="price">${Number(item.price || 0)} ₽</div>
+                <div class="meta">${escapeHtml(item.weight || 'Без веса')}${item.hit ? ' • Хит' : ''}</div>
               </div>
+              ${cardActions(originalIndex)}
             </div>
           </div>
         </div>`;

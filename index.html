@@ -84,12 +84,6 @@
           </div>
         </div>
 
-        <div class="panelStatus">
-          <div class="statusBadge" id="passwordStatus">Пароль не введён</div>
-          <div class="statusBadge" id="workerStatus">Worker не проверен</div>
-          <div class="statusBadge" id="repoStatus">Источник: не загружен</div>
-        </div>
-
         <div class="lockScreen" id="lockScreen">
           <div class="lockScreen__card">
             <div class="lockScreen__icon"><svg viewBox="0 0 24 24"><path d="M17 8h-1V6a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 8.73V17a1 1 0 1 0 2 0v-.27a2 2 0 1 0-2 0ZM10 8V6a2 2 0 1 1 4 0v2h-4Z"/></svg></div>
@@ -195,6 +189,11 @@
           <span>Пароль</span>
           <input name="password" type="password" placeholder="Введите пароль" required />
         </label>
+        <div class="panelStatus panelStatus--inside">
+          <div class="statusBadge" id="passwordStatus">Пароль не введён</div>
+          <div class="statusBadge" id="workerStatus">Worker не проверен</div>
+          <div class="statusBadge" id="repoStatus">Источник: не загружен</div>
+        </div>
         <div class="adminModal__actions">
           <button class="btn btn--ghost" type="button" data-close="authModal">Закрыть</button>
           <button class="btn btn--primary" type="submit">Сохранить пароль</button>
