@@ -172,6 +172,7 @@
     })[String(status || '')] || 'Без статуса';
   }
 
+  
   function renderOrders() {
     if (!els.ordersList) return;
     if (!state.unlocked) {
@@ -184,62 +185,126 @@
       els.ordersList.innerHTML = '<div class="emptyState emptyState--glass">Загрузка заказов…</div>';
       return;
     }
+
     const count = Number(state.orders?.length || 0);
     const total = Number(state.ordersTotal || 0);
-    els.ordersSummary.textContent = count
-      ? `Найдено ${count} из ${total} заказов`
-      : 'Заказы по фильтру не найдены';
+    const q = String(state.ordersQuery || '').trim();
+    els.ordersSummary.textContent = q
+      ? (count ? `Найдено ${count} из ${total} заказов по запросу «${escapeHtml(q)}»` : 'По запросу заказы не найдены')
+      : (count ? `Найдено ${count} из ${total} заказов` : 'Заказы пока не найдены');
+
     if (!count) {
       els.ordersList.innerHTML = '<div class="emptyState emptyState--glass">Заказов пока нет.</div>';
       return;
     }
+
     els.ordersList.innerHTML = state.orders.map(order => {
+      const customerName = order.customer?.name || 'Не указано';
+      const customerPhone = order.customer?.phone || '—';
+      const deliveryType = order.delivery?.type === 'pickup' ? 'Самовывоз' : 'Доставка';
+      const address = order.delivery?.type === 'pickup'
+        ? (order.delivery?.restaurant || order.delivery?.address || '—')
+        : (order.delivery?.address || '—');
+
+      const details = [
+        order.delivery?.entrance ? `подъезд ${escapeHtml(order.delivery.entrance)}` : '',
+        order.delivery?.floor ? `этаж ${escapeHtml(order.delivery.floor)}` : '',
+        order.delivery?.flat ? `кв. ${escapeHtml(order.delivery.flat)}` : ''
+      ].filter(Boolean).join(' • ');
+
+      const whenText = order.when?.type === 'later' && order.when?.date
+        ? `Ко времени: ${escapeHtml(formatOrderDate(order.when.date))}`
+        : 'Ближайшее время';
+
+      const paymentText = order.paymentLabel || order.payment || '—';
+      const changeText = order.payment === 'cash' && order.changeFrom ? `Сдача с ${escapeHtml(String(order.changeFrom))} ₽` : '';
       const items = Array.isArray(order.items) ? order.items.map(item => `
         <div class="orderItemRow">
-          <span class="orderItemRow__name">${escapeHtml(item.name || 'Без названия')}</span>
-          <span class="orderItemRow__meta">×${Number(item.qty || 1)} • ${Number(item.sum || item.price || 0)} ₽</span>
+          <div class="orderItemRow__left">
+            <div class="orderItemRow__name">${escapeHtml(item.name || 'Без названия')}</div>
+            <div class="orderItemRow__sub">${escapeHtml(item.weight || '')}</div>
+          </div>
+          <div class="orderItemRow__right">
+            <div class="orderItemRow__qty">×${Number(item.qty || 1)}</div>
+            <div class="orderItemRow__sum">${Number(item.sum || item.price || 0)} ₽</div>
+          </div>
         </div>
       `).join('') : '';
-      const address = order.delivery?.type === 'pickup'
-        ? `Самовывоз • ${escapeHtml(order.delivery?.restaurant || order.delivery?.address || '—')}`
-        : escapeHtml(order.delivery?.address || '—');
+
+      const promoBlock = order.promo?.discount
+        ? `
+          <div class="orderMetaRow">
+            <span>Промокод</span>
+            <span>${escapeHtml(order.promo.title || order.promo.code || '—')} • −${Number(order.promo.discount || 0)} ₽</span>
+          </div>
+        `
+        : '';
+
+      const extraRows = `
+        <div class="orderMetaRow"><span>Сумма блюд</span><span>${Number(order.subtotal || 0)} ₽</span></div>
+        <div class="orderMetaRow"><span>Доставка</span><span>${Number(order.delivery?.price || 0)} ₽</span></div>
+        <div class="orderMetaRow"><span>Приборы</span><span>${Number(order.cutlery?.price || 0)} ₽${Number(order.cutlery?.count || 0) ? ` • ${Number(order.cutlery.count)} перс.` : ''}</span></div>
+        ${Number(order.pricing?.nightMarkup || 0) ? `<div class="orderMetaRow"><span>Ночная наценка</span><span>+${Number(order.pricing.nightMarkup)} ₽</span></div>` : ''}
+        ${Number(order.pricing?.happyHoursDiscount || 0) ? `<div class="orderMetaRow"><span>Счастливые часы</span><span>−${Number(order.pricing.happyHoursDiscount)} ₽</span></div>` : ''}
+        ${promoBlock}
+      `;
+
       return `
         <article class="orderCard">
           <div class="orderCard__head">
             <div>
-              <div class="orderCard__id">#${escapeHtml(order.id || '—')}</div>
+              <div class="orderCard__id">Заказ #${escapeHtml(order.id || '—')}</div>
               <div class="orderCard__date">${escapeHtml(formatOrderDate(order.createdAt))}</div>
             </div>
-            <div class="orderStatusBadge is-${escapeHtml(String(order.status || 'new'))}">${escapeHtml(orderStatusLabel(order.status))}</div>
+            <div class="orderCard__badge">${escapeHtml(deliveryType)}</div>
           </div>
-          <div class="orderCard__grid">
+
+          <div class="orderCard__grid orderCard__grid--top">
             <div class="orderCard__block">
               <div class="orderCard__label">Клиент</div>
-              <div class="orderCard__value">${escapeHtml(order.customer?.name || '—')}</div>
-              <div class="orderCard__sub">${escapeHtml(order.customer?.phone || '—')}</div>
-            </div>
-            <div class="orderCard__block">
-              <div class="orderCard__label">Получение</div>
-              <div class="orderCard__value">${escapeHtml(order.delivery?.type === 'pickup' ? 'Самовывоз' : 'Доставка')}</div>
-              <div class="orderCard__sub">${address}</div>
+              <div class="orderCard__value">${escapeHtml(customerName)}</div>
+              <div class="orderCard__sub">${escapeHtml(customerPhone)}</div>
             </div>
             <div class="orderCard__block">
               <div class="orderCard__label">Оплата</div>
-              <div class="orderCard__value">${escapeHtml(order.paymentLabel || order.payment || '—')}</div>
-              <div class="orderCard__sub">${escapeHtml(order.when?.type === 'later' && order.when?.date ? 'На ' + formatOrderDate(order.when.date) : 'Ближайшее время')}</div>
-            </div>
-            <div class="orderCard__block orderCard__block--total">
-              <div class="orderCard__label">Итог</div>
-              <div class="orderCard__value">${Number(order.total || 0)} ₽</div>
-              <div class="orderCard__sub">${escapeHtml(order.site || 'prozharim')}</div>
+              <div class="orderCard__value">${escapeHtml(paymentText)}</div>
+              <div class="orderCard__sub">${changeText ? escapeHtml(changeText) : 'Без сдачи'}</div>
             </div>
           </div>
-          <div class="orderCard__items">${items || '<div class="orderItemRow">Состав заказа не найден</div>'}</div>
-          ${order.comment ? `<div class="orderCard__comment">Комментарий: ${escapeHtml(order.comment)}</div>` : ''}
+
+          <div class="orderCard__block">
+            <div class="orderCard__label">Адрес и получение</div>
+            <div class="orderCard__value">${escapeHtml(address)}</div>
+            <div class="orderCard__sub">${details || 'Без доп. данных'} • ${escapeHtml(whenText)}</div>
+          </div>
+
+          <div class="orderCard__items">
+            <div class="orderCard__label">Состав заказа</div>
+            ${items || '<div class="orderItemRow">Состав заказа не найден</div>'}
+          </div>
+
+          <div class="orderCard__block">
+            <div class="orderCard__label">Итоги</div>
+            <div class="orderMetaList">
+              ${extraRows}
+            </div>
+            <div class="orderCard__totalRow">
+              <span>Итого</span>
+              <strong>${Number(order.total || 0)} ₽</strong>
+            </div>
+          </div>
+
+          ${order.comment ? `
+            <div class="orderCard__comment">
+              <span class="orderCard__label">Комментарий клиента</span>
+              <div>${escapeHtml(order.comment)}</div>
+            </div>
+          ` : ''}
         </article>
       `;
     }).join('');
   }
+
 
   async function loadOrders(query = state.ordersQuery || '') {
     if (!state.password || !workerUrl) return;
