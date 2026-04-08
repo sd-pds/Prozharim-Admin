@@ -961,11 +961,20 @@
       renderDeliveryZoneList();
       fillZoneForm();
       renderDeliveryMap();
+      renderOrders();
       setBadge(els.passwordStatus, 'Введите пароль для загрузки меню', 'isWarn');
       return;
     }
+
     setBadge(els.workerStatus, 'Проверка доступа...', 'isWarn');
-    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes(), loadDeliveryZones(), loadOrders(state.ordersQuery)]);
+
+    await Promise.all([
+      loadMenu(),
+      loadPromotions(),
+      loadPromocodes(),
+      loadDeliveryZones()
+    ]);
+
     state.unlocked = true;
     updateStats();
     updateLockScreen();
@@ -976,9 +985,26 @@
     fillZoneForm();
     renderDeliveryMap();
     renderOrders();
+
     setBadge(els.passwordStatus, 'Пароль принят', 'isOk');
     setBadge(els.workerStatus, 'Worker отвечает', 'isOk');
     setBadge(els.repoStatus, `Источник: ${state.source}${state.repoInfo?.owner ? ` • ${state.repoInfo.owner}/${state.repoInfo.repo}` : ''}`, 'isOk');
+
+    loadOrders(state.ordersQuery)
+      .then(() => {
+        renderOrders();
+      })
+      .catch((error) => {
+        console.error('Orders load failed:', error);
+        state.ordersLoading = false;
+        state.ordersLoaded = false;
+        if (els.ordersSummary) {
+          els.ordersSummary.textContent = `Заказы временно недоступны: ${error.message || 'ошибка загрузки'}`;
+        }
+        renderOrders();
+        showToast(error.message || 'Не удалось загрузить заказы', true);
+      });
+
     showToast('Данные загружены');
   }
 
@@ -1125,7 +1151,7 @@
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
       renderDeliveryModeTabs();
-    resetLockedState();
+      resetLockedState();
       setBadge(els.passwordStatus, 'Пароль не введён', 'isWarn');
       closeModal('authModal');
       showToast('Пароль очищен');
@@ -1147,8 +1173,10 @@
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
       resetLockedState();
-      setBadge(els.passwordStatus, 'Неверный пароль', 'isWarn');
-      showToast(error.message || 'Неверный пароль', true);
+      const message = String(error?.message || '');
+      const isAuthError = /неверный пароль|401|unauthorized/i.test(message);
+      setBadge(els.passwordStatus, isAuthError ? 'Неверный пароль' : 'Ошибка загрузки', 'isWarn');
+      showToast(isAuthError ? 'Неверный пароль' : message || 'Ошибка загрузки панели', true);
     }
   }
 
