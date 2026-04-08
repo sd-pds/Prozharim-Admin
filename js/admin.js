@@ -3,7 +3,7 @@
   const workerUrl = String(cfg.workerUrl || '').replace(/\/$/, '');
   const assetBaseUrl = String(cfg.assetBaseUrl || '').replace(/\/$/, '');
   const passwordStorageKey = cfg.passwordStorageKey || 'prozharim_admin_password';
-  const ordersRefreshMs = Number(cfg.ordersRefreshMs || 15000);
+  const ordersRefreshMs = Number(cfg.ordersRefreshMs || 120000);
 
   const els = {
     products: document.getElementById('products'),
