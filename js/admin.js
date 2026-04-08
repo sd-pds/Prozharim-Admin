@@ -3,6 +3,7 @@
   const workerUrl = String(cfg.workerUrl || '').replace(/\/$/, '');
   const assetBaseUrl = String(cfg.assetBaseUrl || '').replace(/\/$/, '');
   const passwordStorageKey = cfg.passwordStorageKey || 'prozharim_admin_password';
+  const ordersRefreshMs = Number(cfg.ordersRefreshMs || 15000);
 
   const els = {
     products: document.getElementById('products'),
@@ -45,7 +46,11 @@
     editZoneGeometryBtn: document.getElementById('editZoneGeometryBtn'),
     finishZoneGeometryBtn: document.getElementById('finishZoneGeometryBtn'),
     deleteZoneBtn: document.getElementById('deleteZoneBtn'),
-    deliveryMap: document.getElementById('deliveryMap')
+    deliveryMap: document.getElementById('deliveryMap'),
+    ordersSearch: document.getElementById('ordersSearch'),
+    ordersList: document.getElementById('ordersList'),
+    ordersSummary: document.getElementById('ordersSummary'),
+    statOrders: document.getElementById('statOrders')
   };
 
   const state = {
@@ -70,7 +75,13 @@
     deliveryZonesNightSha: '',
     originalZonesDayJson: '{\n  "type": "FeatureCollection",\n  "features": []\n}\n',
     originalZonesNightJson: '{\n  "type": "FeatureCollection",\n  "features": []\n}\n',
-    selectedZoneIndex: -1
+    selectedZoneIndex: -1,
+    orders: [],
+    ordersTotal: 0,
+    ordersQuery: '',
+    ordersLoaded: false,
+    ordersLoading: false,
+    ordersRefreshTimer: null
   };
 
   function escapeHtml(value) {
@@ -123,6 +134,7 @@
     const currentZonesNight = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
     state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
+    if (els.statOrders) els.statOrders.textContent = state.ordersTotal || 0;
     document.title = `${state.dirty ? '● ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
 
@@ -135,6 +147,115 @@
   }
 
 
+
+
+  function formatOrderDate(value) {
+    const date = value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat('ru-RU', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  }
+
+  function orderStatusLabel(status) {
+    return ({
+      new: 'Новый',
+      confirmed: 'Подтверждён',
+      cooking: 'Готовится',
+      delivery: 'В пути',
+      done: 'Завершён',
+      cancelled: 'Отменён'
+    })[String(status || '')] || 'Без статуса';
+  }
+
+  function renderOrders() {
+    if (!els.ordersList) return;
+    if (!state.unlocked) {
+      els.ordersSummary.textContent = 'Введите пароль для загрузки заказов';
+      els.ordersList.innerHTML = '<div class="emptyState emptyState--glass">Доступ к заказам заблокирован</div>';
+      return;
+    }
+    if (state.ordersLoading) {
+      els.ordersSummary.textContent = 'Загрузка заказов…';
+      els.ordersList.innerHTML = '<div class="emptyState emptyState--glass">Загрузка заказов…</div>';
+      return;
+    }
+    const count = Number(state.orders?.length || 0);
+    const total = Number(state.ordersTotal || 0);
+    els.ordersSummary.textContent = count
+      ? `Найдено ${count} из ${total} заказов`
+      : 'Заказы по фильтру не найдены';
+    if (!count) {
+      els.ordersList.innerHTML = '<div class="emptyState emptyState--glass">Заказов пока нет.</div>';
+      return;
+    }
+    els.ordersList.innerHTML = state.orders.map(order => {
+      const items = Array.isArray(order.items) ? order.items.map(item => `
+        <div class="orderItemRow">
+          <span class="orderItemRow__name">${escapeHtml(item.name || 'Без названия')}</span>
+          <span class="orderItemRow__meta">×${Number(item.qty || 1)} • ${Number(item.sum || item.price || 0)} ₽</span>
+        </div>
+      `).join('') : '';
+      const address = order.delivery?.type === 'pickup'
+        ? `Самовывоз • ${escapeHtml(order.delivery?.restaurant || order.delivery?.address || '—')}`
+        : escapeHtml(order.delivery?.address || '—');
+      return `
+        <article class="orderCard">
+          <div class="orderCard__head">
+            <div>
+              <div class="orderCard__id">#${escapeHtml(order.id || '—')}</div>
+              <div class="orderCard__date">${escapeHtml(formatOrderDate(order.createdAt))}</div>
+            </div>
+            <div class="orderStatusBadge is-${escapeHtml(String(order.status || 'new'))}">${escapeHtml(orderStatusLabel(order.status))}</div>
+          </div>
+          <div class="orderCard__grid">
+            <div class="orderCard__block">
+              <div class="orderCard__label">Клиент</div>
+              <div class="orderCard__value">${escapeHtml(order.customer?.name || '—')}</div>
+              <div class="orderCard__sub">${escapeHtml(order.customer?.phone || '—')}</div>
+            </div>
+            <div class="orderCard__block">
+              <div class="orderCard__label">Получение</div>
+              <div class="orderCard__value">${escapeHtml(order.delivery?.type === 'pickup' ? 'Самовывоз' : 'Доставка')}</div>
+              <div class="orderCard__sub">${address}</div>
+            </div>
+            <div class="orderCard__block">
+              <div class="orderCard__label">Оплата</div>
+              <div class="orderCard__value">${escapeHtml(order.paymentLabel || order.payment || '—')}</div>
+              <div class="orderCard__sub">${escapeHtml(order.when?.type === 'later' && order.when?.date ? 'На ' + formatOrderDate(order.when.date) : 'Ближайшее время')}</div>
+            </div>
+            <div class="orderCard__block orderCard__block--total">
+              <div class="orderCard__label">Итог</div>
+              <div class="orderCard__value">${Number(order.total || 0)} ₽</div>
+              <div class="orderCard__sub">${escapeHtml(order.site || 'prozharim')}</div>
+            </div>
+          </div>
+          <div class="orderCard__items">${items || '<div class="orderItemRow">Состав заказа не найден</div>'}</div>
+          ${order.comment ? `<div class="orderCard__comment">Комментарий: ${escapeHtml(order.comment)}</div>` : ''}
+        </article>
+      `;
+    }).join('');
+  }
+
+  async function loadOrders(query = state.ordersQuery || '') {
+    if (!state.password || !workerUrl) return;
+    state.ordersLoading = true;
+    renderOrders();
+    const data = await fetchJson(`${workerUrl}/api/orders?q=${encodeURIComponent(query)}`, {
+      headers: { 'x-admin-password': state.password }
+    });
+    state.orders = Array.isArray(data.items) ? data.items : [];
+    state.ordersTotal = Number(data.total || state.orders.length || 0);
+    state.ordersQuery = query;
+    state.ordersLoaded = true;
+    state.ordersLoading = false;
+    updateStats();
+    renderOrders();
+  }
 
   function emptyFeatureCollection() {
     return { type: 'FeatureCollection', features: [] };
@@ -844,7 +965,7 @@
       return;
     }
     setBadge(els.workerStatus, 'Проверка доступа...', 'isWarn');
-    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes(), loadDeliveryZones()]);
+    await Promise.all([loadMenu(), loadPromotions(), loadPromocodes(), loadDeliveryZones(), loadOrders(state.ordersQuery)]);
     state.unlocked = true;
     updateStats();
     updateLockScreen();
@@ -854,6 +975,7 @@
     renderDeliveryZoneList();
     fillZoneForm();
     renderDeliveryMap();
+    renderOrders();
     setBadge(els.passwordStatus, 'Пароль принят', 'isOk');
     setBadge(els.workerStatus, 'Worker отвечает', 'isOk');
     setBadge(els.repoStatus, `Источник: ${state.source}${state.repoInfo?.owner ? ` • ${state.repoInfo.owner}/${state.repoInfo.repo}` : ''}`, 'isOk');
@@ -976,6 +1098,11 @@
     state.deliveryZonesNightSha = '';
     state.selectedZoneIndex = -1;
     state.category = 'Все';
+    state.orders = [];
+    state.ordersTotal = 0;
+    state.ordersLoaded = false;
+    state.ordersLoading = false;
+    if (state.ordersRefreshTimer) { clearInterval(state.ordersRefreshTimer); state.ordersRefreshTimer = null; }
     updateStats();
     renderTabs();
     renderProducts();
@@ -985,6 +1112,7 @@
     renderDeliveryZoneList();
     fillZoneForm();
     renderDeliveryMap();
+    renderOrders();
     updateLockScreen();
     setBadge(els.workerStatus, 'Ожидает авторизацию', 'isWarn');
     setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
@@ -1008,6 +1136,11 @@
     sessionStorage.setItem(passwordStorageKey, password);
     try {
       await loadAll();
+      if (state.ordersRefreshTimer) clearInterval(state.ordersRefreshTimer);
+      state.ordersRefreshTimer = setInterval(() => {
+        if (!state.unlocked || !state.password) return;
+        loadOrders(state.ordersQuery).catch(() => {});
+      }, ordersRefreshMs);
       closeModal('authModal');
       showToast('Пароль принят');
     } catch (error) {
@@ -1023,6 +1156,16 @@
     els.search?.addEventListener('input', (e) => {
       state.query = e.target.value || '';
       renderProducts();
+    });
+
+    let ordersSearchTimer = null;
+    els.ordersSearch?.addEventListener('input', (e) => {
+      state.ordersQuery = e.target.value || '';
+      clearTimeout(ordersSearchTimer);
+      ordersSearchTimer = setTimeout(() => {
+        if (!state.unlocked) return;
+        loadOrders(state.ordersQuery).catch(error => showToast(error.message || 'Ошибка загрузки заказов', true));
+      }, 260);
     });
 
     els.products?.addEventListener('click', (e) => {

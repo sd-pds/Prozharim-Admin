@@ -34,6 +34,7 @@
         <a href="#promotions" class="nav__link">Акции</a>
         <a href="#delivery" class="nav__link">Доставка</a>
         <a href="#promocodes" class="nav__link">Промокоды</a>
+        <a href="#orders" class="nav__link">Заказы</a>
       </nav>
 
       <div class="adminHeaderActions">
@@ -63,6 +64,7 @@
             <div class="stat"><div class="stat__num" id="statPromotions">0</div><div class="stat__txt">акций</div></div>
             <div class="stat"><div class="stat__num" id="statPromocodes">0</div><div class="stat__txt">промокодов</div></div>
             <div class="stat"><div class="stat__num" id="statChanged">0</div><div class="stat__txt">изменений</div></div>
+            <div class="stat"><div class="stat__num" id="statOrders">0</div><div class="stat__txt">заказов</div></div>
           </div>
         </div>
       </div>
@@ -159,6 +161,21 @@
         <div class="promoCodeList" id="promoCodeList"></div>
       </div>
     </section>
+  
+    <section class="section" id="orders">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">Заказы</h2>
+          <div class="section__tools adminTools">
+            <div class="adminHelpText">История заказов только по ресторану «Прожарим».</div>
+            <div class="search"><input id="ordersSearch" type="search" placeholder="Поиск по заказам…" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="ordersSummary" id="ordersSummary">Заказы ещё не загружены</div>
+        <div class="ordersList" id="ordersList"></div>
+      </div>
+    </section>
+
   </main>
 
   <button class="backToTop isShown" id="backToTop" type="button" aria-label="Наверх">↑</button>
