@@ -249,7 +249,7 @@
       const data = await fetchJson(`${workerUrl}/api/orders?q=${encodeURIComponent(query)}`, {
         headers: { 'x-admin-password': state.password }
       });
-      state.orders = Array.isArray(data.items) ? data.items : [];
+      state.orders = Array.isArray(data.orders) ? data.orders : Array.isArray(data.items) ? data.items : [];
       state.ordersTotal = Number(data.total || state.orders.length || 0);
       state.ordersQuery = query;
       state.ordersLoaded = true;
