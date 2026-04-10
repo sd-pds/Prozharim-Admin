@@ -135,7 +135,7 @@
     state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
     if (els.statOrders) els.statOrders.textContent = state.ordersTotal || 0;
-    document.title = `${state.dirty ? '● ' : ''}ПРОЖАРИМ — панель управления меню`;
+    document.title = `${state.dirty ? '❗️ НЕ СОХРАНЕНО ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
 
   function updateStats() {
