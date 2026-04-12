@@ -1298,6 +1298,7 @@
     renderDeliveryMap();
     renderOrders();
     updateLockScreen();
+    setActiveSection('menu');
     setBadge(els.workerStatus, 'Ожидает авторизацию', 'isWarn');
     setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
   }
@@ -1482,8 +1483,8 @@
 
   function init() {
     bindEvents();
-    setActiveSection('menu');
     resetLockedState();
+    setActiveSection('menu');
     if (state.password) loadAll().catch(() => {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
