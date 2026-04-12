@@ -9,7 +9,6 @@
     products: document.getElementById('products'),
     tabs: document.getElementById('categoryTabs'),
     search: document.getElementById('search'),
-    showHiddenToggle: document.getElementById('showHiddenToggle'),
     toast: document.getElementById('toast'),
     productModal: document.getElementById('productModal'),
     productForm: document.getElementById('productForm'),
@@ -18,6 +17,8 @@
     authForm: document.getElementById('authForm'),
     authBtn: document.getElementById('authBtn'),
     saveBtn: document.getElementById('saveBtn'),
+    mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+    mobileMenuSheet: document.getElementById('mobileMenuSheet'),
     addProductBtn: document.getElementById('addProductBtn'),
     reloadBtn: document.getElementById('reloadBtn'),
     addPromoCodeBtn: document.getElementById('addPromoCodeBtn'),
@@ -59,11 +60,10 @@
     promotions: [],
     promocodes: [],
     originalMenuJson: '[]\n',
-    originalPromotionsJson: '[]\n',
     originalPromocodesJson: '[]\n',
+    originalPromotionsJson: '[]\n',
     category: 'Все',
     query: '',
-    showHidden: false,
     password: sessionStorage.getItem(passwordStorageKey) || '',
     sha: '',
     promoCodesSha: '',
@@ -111,6 +111,24 @@
     }, 2600);
   }
 
+  function toggleMobileMenu(open) {
+    if (!els.mobileMenuSheet) return;
+    const shouldOpen = typeof open === 'boolean' ? open : els.mobileMenuSheet.hasAttribute('hidden');
+    if (shouldOpen) {
+      els.mobileMenuSheet.removeAttribute('hidden');
+      document.body.classList.add('mobileMenuOpen');
+    } else {
+      els.mobileMenuSheet.setAttribute('hidden', 'hidden');
+      document.body.classList.remove('mobileMenuOpen');
+    }
+  }
+
+  function eyeIconMarkup(isVisible) {
+    return isVisible
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c5.5 0 9.6 4 11 7-1.4 3-5.5 7-11 7S2.4 15 1 12c1.4-3 5.5-7 11-7Zm0 2C8 7 4.8 9.8 3.2 12 4.8 14.2 8 17 12 17s7.2-2.8 8.8-5C19.2 9.8 16 7 12 7Zm0 2.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.3 2 18.7 18.7-1.4 1.4-3.2-3.2A13.4 13.4 0 0 1 12 20c-5.5 0-9.6-4-11-7 1-2.1 3.3-4.7 6.5-6.2L1.9 3.4 3.3 2Zm6 6 1.6 1.6a2.5 2.5 0 0 0 3.5 3.5l1.6 1.6A4.5 4.5 0 0 1 9.3 8Zm2.7-3c5.5 0 9.6 4 11 7-.8 1.7-2.4 3.6-4.7 5.1l-1.4-1.4c1.8-1.2 3.1-2.6 4-3.7C19.2 9.8 16 7 12 7c-1 0-2 .2-2.9.5L7.5 5.9C8.9 5.3 10.4 5 12 5Z"/></svg>';
+  }
+
   function setBadge(el, text, kind = '') {
     if (!el) return;
     el.textContent = text;
@@ -139,6 +157,7 @@
     const currentZonesNight = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
     state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentPromotions !== state.originalPromotionsJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
+    if (els.saveBtn) els.saveBtn.classList.toggle('isShown', !!state.dirty);
     if (els.statOrders) els.statOrders.textContent = state.ordersTotal || 0;
     document.title = `${state.dirty ? '❗️ НЕ СОХРАНЕНО ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
@@ -454,8 +473,8 @@
   function getFilteredMenu() {
     let list = state.menu.slice();
     const q = state.query.trim().toLowerCase();
-    if (state.category !== 'Все') list = list.filter(item => item.category === state.category);
-    if (!state.showHidden) list = list.filter(item => item.visible !== false);
+    if (state.category === 'Скрытые') list = list.filter(item => item.visible === false);
+    else if (state.category !== 'Все') list = list.filter(item => item.category === state.category);
     if (q) list = list.filter(item => [item.name, item.desc, item.category, item.id, item.weight].some(v => String(v || '').toLowerCase().includes(q)));
     return list;
   }
@@ -464,19 +483,16 @@
     const item = state.menu[itemIndex] || {};
     const isVisible = item.visible !== false;
     return `
-      <div class="adminCardActionsWrap">
-        <label class="adminToggleLine adminToggleLine--compact">
-          <input type="checkbox" data-item-visible="${itemIndex}" ${isVisible ? 'checked' : ''}>
-          <span>${isVisible ? 'Показывается' : 'Скрыт'}</span>
-        </label>
-        <div class="adminCardActions">
-          <button class="iconMiniBtn" type="button" data-edit="${itemIndex}" title="Редактировать" aria-label="Редактировать">
-            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58ZM20.71 5.63a1 1 0 0 0 0-1.41l-.93-.92a1 1 0 0 0-1.41 0l-1.17 1.17 2.34 2.34 1.17-1.18Z"/></svg>
-          </button>
-          <button class="iconMiniBtn iconMiniBtn--danger" type="button" data-delete="${itemIndex}" title="Удалить" aria-label="Удалить">
-            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
-          </button>
-        </div>
+      <div class="adminCardActions">
+        <button class="iconMiniBtn" type="button" data-edit="${itemIndex}" title="Редактировать" aria-label="Редактировать">
+          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58ZM20.71 5.63a1 1 0 0 0 0-1.41l-.93-.92a1 1 0 0 0-1.41 0l-1.17 1.17 2.34 2.34 1.17-1.18Z"/></svg>
+        </button>
+        <button class="iconMiniBtn ${isVisible ? '' : 'iconMiniBtn--warn'}" type="button" data-toggle-visible="${itemIndex}" title="${isVisible ? 'Скрыть товар' : 'Показать товар'}" aria-label="${isVisible ? 'Скрыть товар' : 'Показать товар'}">
+          ${eyeIconMarkup(isVisible)}
+        </button>
+        <button class="iconMiniBtn iconMiniBtn--danger" type="button" data-delete="${itemIndex}" title="Удалить" aria-label="Удалить">
+          <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+        </button>
       </div>`;
   }
 
@@ -527,23 +543,19 @@
     }
     const cards = state.promotions.map((item, index) => {
       const isVisible = item.visible !== false;
-      const title = item.name || item.title || item.path?.split('/').pop() || `Баннер ${index + 1}`;
       return `
       <article class="promoAdminCard ${!isVisible ? 'promoAdminCard--hidden' : ''}">
-        <img src="${escapeHtml(normalizeImg(item.path))}" alt="${escapeHtml(title)}" loading="lazy">
-        <button class="iconMiniBtn iconMiniBtn--danger promoAdminDelete" type="button" data-delete-promo="${escapeHtml(item.path)}" aria-label="Удалить баннер" title="Удалить баннер">
-          <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
-        </button>
-        <div class="promoAdminCard__footer">
-          <div class="promoAdminCard__title">${escapeHtml(title)}</div>
-          <label class="adminToggleLine adminToggleLine--compact">
-            <input type="checkbox" data-promo-visible="${index}" ${isVisible ? 'checked' : ''}>
-            <span>${isVisible ? 'Показывается' : 'Скрыт'}</span>
-          </label>
+        <img src="${escapeHtml(normalizeImg(item.path))}" alt="Акция ${index + 1}" loading="lazy">
+        <div class="promoAdminCard__actions">
+          <button class="iconMiniBtn ${isVisible ? '' : 'iconMiniBtn--warn'}" type="button" data-toggle-promo-visible="${index}" title="${isVisible ? 'Скрыть баннер' : 'Показать баннер'}" aria-label="${isVisible ? 'Скрыть баннер' : 'Показать баннер'}">
+            ${eyeIconMarkup(isVisible)}
+          </button>
+          <button class="iconMiniBtn iconMiniBtn--danger promoAdminDelete" type="button" data-delete-promo="${escapeHtml(item.path)}" aria-label="Удалить баннер" title="Удалить баннер">
+            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+          </button>
         </div>
       </article>
-    `;
-    }).join('');
+    `}).join('');
     els.promoGrid.innerHTML = cards + `
       <button class="promoAdminAdd" type="button" id="promoAddTile" aria-label="Добавить баннер">
         <span class="promoAdminAdd__icon">
@@ -1309,9 +1321,11 @@
       renderProducts();
     });
 
-    els.showHiddenToggle?.addEventListener('change', (e) => {
-      state.showHidden = Boolean(e.target.checked);
-      renderProducts();
+    els.mobileMenuBtn?.addEventListener('click', () => toggleMobileMenu(true));
+    els.mobileMenuSheet?.addEventListener('click', (event) => {
+      if (event.target.closest('[data-mobile-menu-close]') || event.target.closest('[data-mobile-nav]')) {
+        toggleMobileMenu(false);
+      }
     });
 
     let ordersSearchTimer = null;
@@ -1331,29 +1345,9 @@
       if (deleteBtn) deleteItem(Number(deleteBtn.dataset.delete));
     });
 
-    els.products?.addEventListener('change', (e) => {
-      const toggle = e.target.closest('[data-item-visible]');
-      if (!toggle) return;
-      const index = Number(toggle.dataset.itemVisible);
-      if (Number.isNaN(index) || !state.menu[index]) return;
-      state.menu[index].visible = Boolean(toggle.checked);
-      calcDirty();
-      renderProducts();
-    });
-
     els.promoGrid?.addEventListener('click', (e) => {
       const deleteBtn = e.target.closest('[data-delete-promo]');
       if (deleteBtn) deletePromotion(deleteBtn.dataset.deletePromo);
-    });
-
-    els.promoGrid?.addEventListener('change', (e) => {
-      const toggle = e.target.closest('[data-promo-visible]');
-      if (!toggle) return;
-      const index = Number(toggle.dataset.promoVisible);
-      if (Number.isNaN(index) || !state.promotions[index]) return;
-      state.promotions[index].visible = Boolean(toggle.checked);
-      calcDirty();
-      renderPromotions();
     });
 
     els.promoCodeList?.addEventListener('input', (e) => {
