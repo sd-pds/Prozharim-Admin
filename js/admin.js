@@ -515,6 +515,7 @@
       </div>`;
   }
 
+  
   function renderProducts() {
     if (!els.products) return;
     const list = getFilteredMenu();
@@ -536,13 +537,15 @@
         <div class="card__body adminProductCard__body">
           <div class="adminPreview">
             <img class="card__img adminProductCard__img" src="${escapeHtml(normalizeImg(item.img))}" alt="${escapeHtml(item.name)}" loading="lazy">
+
             <div class="adminProductCard__content">
               <div class="card__cat">${escapeHtml(item.category || 'Без категории')}</div>
               <div class="card__name">${escapeHtml(item.name || 'Без названия')}</div>
+              <div class="card__desc adminProductCard__desc">${escapeHtml(item.desc || 'Описание не заполнено')}</div>
             </div>
+
             <div class="adminProductCard__bottom">
               <div class="adminProductCard__meta">
-                <div class="card__desc">${escapeHtml(item.desc || 'Описание не заполнено')}</div>
                 <div class="price">${Number(item.price || 0)} ₽</div>
                 <div class="meta">${escapeHtml(item.weight || 'Без веса')}${item.hit ? ' • Хит' : ''}</div>
               </div>
@@ -554,7 +557,7 @@
     });
   }
 
-  function renderPromotions() {
+  function renderPromotions  function renderPromotions() {
     if (!els.promoGrid) return;
     if (!state.unlocked) {
       els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
@@ -1484,6 +1487,7 @@
   function init() {
     bindEvents();
     resetLockedState();
+    setActiveSection('menu');
     setActiveSection('menu');
     if (state.password) loadAll().catch(() => {
       sessionStorage.removeItem(passwordStorageKey);
