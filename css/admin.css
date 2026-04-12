@@ -114,7 +114,6 @@
   .adminImagePanel { grid-template-columns: 1fr; }
 }
 
-
 /* layout refinement for cards and auth statuses */
 .panelStatus { display:none; }
 .panelStatus--inside {
@@ -203,8 +202,6 @@
   }
 }
 
-
-
 #promotions, #promocodes { padding-top: 18px; }
 .promoAdminGrid{
   display:grid;
@@ -279,7 +276,6 @@
 .deliveryFormActions{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:1100px){.deliveryEditor{grid-template-columns:1fr}.deliverySidebar{position:static}.deliveryFormGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:680px){.deliveryFormGrid{grid-template-columns:1fr}.deliveryMap{height:400px}.deliveryToolbar{justify-content:flex-start}}
-
 
 #orders { padding-top: 18px; }
 .ordersSummary{
@@ -403,7 +399,6 @@
   .orderItemRow__meta{ white-space:normal; }
 }
 
-
 .orderCard__badge{
   padding:10px 14px;
   border-radius:999px;
@@ -487,7 +482,6 @@
   }
 }
 
-
 .iconMiniBtn--warn{
   color:#ffe8b3;
 }
@@ -522,7 +516,6 @@
 .promoAdminDelete{
   margin:0;
 }
-
 
 .floatingSaveBtn{
   position:fixed;
@@ -620,7 +613,6 @@ body.mobileMenuOpen{
   overflow:hidden;
 }
 
-
 .toast{
   position:fixed;
   left:50%;
@@ -648,7 +640,6 @@ body.mobileMenuOpen{
   transform:translate(-50%, 0);
 }
 
-
 .floatingSaveBtn{
   transition:opacity .18s ease, transform .18s ease, filter .18s ease, box-shadow .18s ease;
 }
@@ -665,7 +656,6 @@ body.mobileMenuOpen{
 .floatingSaveBtn.isSaving span::after{
   content:'...';
 }
-
 
 .adminPreview{
   align-items:start;
@@ -684,7 +674,6 @@ body.mobileMenuOpen{
   align-items:flex-start;
 }
 
-
 .nav__link.isActive,
 .mobileMenuSheet__link.isActive{
   color:#fff;
@@ -695,7 +684,6 @@ body.mobileMenuOpen{
   display:none !important;
 }
 
-
 #reloadBtn{
   display:none !important;
 }
@@ -705,7 +693,6 @@ body.mobileMenuOpen{
   border-color:rgba(255,106,61,.34);
   background:rgba(255,106,61,.12);
 }
-
 
 #reloadBtn{
   display:none !important;
@@ -783,7 +770,6 @@ body.mobileMenuOpen{
     justify-content:flex-start;
   }
 }
-
 
 #reloadBtn{
   display:none !important;
