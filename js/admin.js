@@ -85,7 +85,8 @@
     ordersQuery: '',
     ordersLoaded: false,
     ordersLoading: false,
-    ordersRefreshTimer: null
+    ordersRefreshTimer: null,
+    activeSection: 'menu'
   };
 
   function escapeHtml(value) {
@@ -109,6 +110,23 @@
       els.toast.style.borderColor = '';
       els.toast.style.color = '';
     }, 2600);
+  }
+
+
+  function setActiveSection(section) {
+    state.activeSection = section || 'menu';
+
+    document.querySelectorAll('[data-admin-section]').forEach((el) => {
+      const current = el.getAttribute('data-admin-section');
+      const isActive = current === state.activeSection;
+      if (isActive) el.removeAttribute('hidden');
+      else if (current !== 'menu' || state.activeSection !== 'menu') el.setAttribute('hidden', 'hidden');
+    });
+
+    document.querySelectorAll('[data-section-link]').forEach((link) => {
+      const current = link.getAttribute('data-section-link');
+      link.classList.toggle('isActive', current === state.activeSection);
+    });
   }
 
   function toggleMobileMenu(open) {
@@ -1464,6 +1482,7 @@
 
   function init() {
     bindEvents();
+    setActiveSection('menu');
     resetLockedState();
     if (state.password) loadAll().catch(() => {
       sessionStorage.removeItem(passwordStorageKey);
