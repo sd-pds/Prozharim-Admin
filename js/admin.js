@@ -461,14 +461,22 @@
   }
 
   function cardActions(itemIndex) {
+    const item = state.menu[itemIndex] || {};
+    const isVisible = item.visible !== false;
     return `
-      <div class="adminCardActions">
-        <button class="iconMiniBtn" type="button" data-edit="${itemIndex}" title="Редактировать" aria-label="Редактировать">
-          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58ZM20.71 5.63a1 1 0 0 0 0-1.41l-.93-.92a1 1 0 0 0-1.41 0l-1.17 1.17 2.34 2.34 1.17-1.18Z"/></svg>
-        </button>
-        <button class="iconMiniBtn iconMiniBtn--danger" type="button" data-delete="${itemIndex}" title="Удалить" aria-label="Удалить">
-          <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
-        </button>
+      <div class="adminCardActionsWrap">
+        <label class="adminToggleLine adminToggleLine--compact">
+          <input type="checkbox" data-item-visible="${itemIndex}" ${isVisible ? 'checked' : ''}>
+          <span>${isVisible ? 'Показывается' : 'Скрыт'}</span>
+        </label>
+        <div class="adminCardActions">
+          <button class="iconMiniBtn" type="button" data-edit="${itemIndex}" title="Редактировать" aria-label="Редактировать">
+            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58ZM20.71 5.63a1 1 0 0 0 0-1.41l-.93-.92a1 1 0 0 0-1.41 0l-1.17 1.17 2.34 2.34 1.17-1.18Z"/></svg>
+          </button>
+          <button class="iconMiniBtn iconMiniBtn--danger" type="button" data-delete="${itemIndex}" title="Удалить" aria-label="Удалить">
+            <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+          </button>
+        </div>
       </div>`;
   }
 
@@ -533,7 +541,8 @@
             <span>${isVisible ? 'Показывается' : 'Скрыт'}</span>
           </label>
         </div>
-      </article>`;
+      </article>
+    `;
     }).join('');
     els.promoGrid.innerHTML = cards + `
       <button class="promoAdminAdd" type="button" id="promoAddTile" aria-label="Добавить баннер">
@@ -1138,7 +1147,6 @@
     state.originalPromotionsJson = JSON.stringify(state.promotions, null, 2) + '\n';
   }
 
-
   async function saveMenu() {
     const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
     if (currentMenu === state.originalMenuJson) return;
@@ -1323,9 +1331,29 @@
       if (deleteBtn) deleteItem(Number(deleteBtn.dataset.delete));
     });
 
+    els.products?.addEventListener('change', (e) => {
+      const toggle = e.target.closest('[data-item-visible]');
+      if (!toggle) return;
+      const index = Number(toggle.dataset.itemVisible);
+      if (Number.isNaN(index) || !state.menu[index]) return;
+      state.menu[index].visible = Boolean(toggle.checked);
+      calcDirty();
+      renderProducts();
+    });
+
     els.promoGrid?.addEventListener('click', (e) => {
       const deleteBtn = e.target.closest('[data-delete-promo]');
       if (deleteBtn) deletePromotion(deleteBtn.dataset.deletePromo);
+    });
+
+    els.promoGrid?.addEventListener('change', (e) => {
+      const toggle = e.target.closest('[data-promo-visible]');
+      if (!toggle) return;
+      const index = Number(toggle.dataset.promoVisible);
+      if (Number.isNaN(index) || !state.promotions[index]) return;
+      state.promotions[index].visible = Boolean(toggle.checked);
+      calcDirty();
+      renderPromotions();
     });
 
     els.promoCodeList?.addEventListener('input', (e) => {
