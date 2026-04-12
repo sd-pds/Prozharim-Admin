@@ -1488,7 +1488,6 @@
     bindEvents();
     resetLockedState();
     setActiveSection('menu');
-    setActiveSection('menu');
     if (state.password) loadAll().catch(() => {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
