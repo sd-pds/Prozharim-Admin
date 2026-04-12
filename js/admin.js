@@ -112,7 +112,6 @@
     }, 2600);
   }
 
-
   function setActiveSection(section) {
     state.activeSection = section || 'menu';
 
@@ -188,9 +187,6 @@
     if (els.statPromocodes) els.statPromocodes.textContent = state.promocodes.length;
     calcDirty();
   }
-
-
-
 
   function formatOrderDate(value) {
     const date = value ? new Date(value) : null;
@@ -347,7 +343,6 @@
       `;
     }).join('');
   }
-
 
   async function loadOrders(query = state.ordersQuery || '') {
     if (!state.password || !workerUrl) return;
@@ -627,8 +622,6 @@
       </div>
     `).join('');
   }
-
-
 
   let deliveryMap = null;
   let deliveryCollection = null;
@@ -1061,8 +1054,6 @@
     renderPromocodes();
   }
 
-
-
   async function loadDeliveryZones() {
     const data = await fetchJson(`${workerUrl}/api/delivery-zones`, {
       headers: { 'x-admin-password': state.password }
@@ -1199,8 +1190,6 @@
     state.sha = data.sha || state.sha;
     state.originalMenuJson = JSON.stringify(state.menu, null, 2) + '\n';
   }
-
-
 
   async function saveDeliveryZones() {
     const currentDay = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
@@ -1353,6 +1342,16 @@
       if (event.target.closest('[data-mobile-menu-close]') || event.target.closest('[data-mobile-nav]')) {
         toggleMobileMenu(false);
       }
+    });
+
+    document.querySelectorAll('[data-section-link]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const section = link.getAttribute('data-section-link') || 'menu';
+        setActiveSection(section);
+        if (link.hasAttribute('data-mobile-nav')) toggleMobileMenu(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     });
 
     let ordersSearchTimer = null;
