@@ -557,7 +557,7 @@
     });
   }
 
-  function renderPromotions  function renderPromotions() {
+  function renderPromotions() {
     if (!els.promoGrid) return;
     if (!state.unlocked) {
       els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
