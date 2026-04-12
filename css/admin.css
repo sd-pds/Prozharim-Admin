@@ -913,3 +913,8 @@ body:not(.adminUnlocked) .adminGate{
 body.adminUnlocked .adminGate{
   display:none !important;
 }
+
+
+#authBtn{
+  display:none !important;
+}
