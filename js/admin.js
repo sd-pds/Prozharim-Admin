@@ -9,6 +9,7 @@
     products: document.getElementById('products'),
     tabs: document.getElementById('categoryTabs'),
     search: document.getElementById('search'),
+    showHiddenToggle: document.getElementById('showHiddenToggle'),
     toast: document.getElementById('toast'),
     productModal: document.getElementById('productModal'),
     productForm: document.getElementById('productForm'),
@@ -58,12 +59,15 @@
     promotions: [],
     promocodes: [],
     originalMenuJson: '[]\n',
+    originalPromotionsJson: '[]\n',
     originalPromocodesJson: '[]\n',
     category: 'Все',
     query: '',
+    showHidden: false,
     password: sessionStorage.getItem(passwordStorageKey) || '',
     sha: '',
     promoCodesSha: '',
+    promotionsSha: '',
     repoInfo: null,
     source: '',
     dirty: false,
@@ -130,9 +134,10 @@
   function calcDirty() {
     const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
     const currentCodes = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
+    const currentPromotions = JSON.stringify(state.promotions, null, 2) + '\n';
     const currentZonesDay = JSON.stringify(state.deliveryZonesDay, null, 2) + '\n';
     const currentZonesNight = JSON.stringify(state.deliveryZonesNight, null, 2) + '\n';
-    state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
+    state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentPromotions !== state.originalPromotionsJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
     if (els.statOrders) els.statOrders.textContent = state.ordersTotal || 0;
     document.title = `${state.dirty ? '❗️ НЕ СОХРАНЕНО ' : ''}ПРОЖАРИМ — панель управления меню`;
@@ -450,7 +455,8 @@
     let list = state.menu.slice();
     const q = state.query.trim().toLowerCase();
     if (state.category !== 'Все') list = list.filter(item => item.category === state.category);
-    if (q) list = list.filter(item => [item.name, item.desc, item.category, item.id].some(v => String(v || '').toLowerCase().includes(q)));
+    if (!state.showHidden) list = list.filter(item => item.visible !== false);
+    if (q) list = list.filter(item => [item.name, item.desc, item.category, item.id, item.weight].some(v => String(v || '').toLowerCase().includes(q)));
     return list;
   }
 
@@ -482,7 +488,7 @@
     list.forEach(item => {
       const originalIndex = state.menu.indexOf(item);
       const card = document.createElement('article');
-      card.className = 'card adminProductCard';
+      card.className = 'card adminProductCard' + (item.visible === false ? ' adminProductCard--hidden' : '');
       card.innerHTML = `
         <div class="card__body adminProductCard__body">
           <div class="adminPreview">
@@ -511,14 +517,24 @@
       els.promoGrid.innerHTML = '<div class="emptyState emptyState--glass">Доступ заблокирован</div>';
       return;
     }
-    const cards = state.promotions.map((item, index) => `
-      <article class="promoAdminCard">
-        <img src="${escapeHtml(normalizeImg(item.path))}" alt="Акция ${index + 1}" loading="lazy">
+    const cards = state.promotions.map((item, index) => {
+      const isVisible = item.visible !== false;
+      const title = item.name || item.title || item.path?.split('/').pop() || `Баннер ${index + 1}`;
+      return `
+      <article class="promoAdminCard ${!isVisible ? 'promoAdminCard--hidden' : ''}">
+        <img src="${escapeHtml(normalizeImg(item.path))}" alt="${escapeHtml(title)}" loading="lazy">
         <button class="iconMiniBtn iconMiniBtn--danger promoAdminDelete" type="button" data-delete-promo="${escapeHtml(item.path)}" aria-label="Удалить баннер" title="Удалить баннер">
           <svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Z"/></svg>
         </button>
-      </article>
-    `).join('');
+        <div class="promoAdminCard__footer">
+          <div class="promoAdminCard__title">${escapeHtml(title)}</div>
+          <label class="adminToggleLine adminToggleLine--compact">
+            <input type="checkbox" data-promo-visible="${index}" ${isVisible ? 'checked' : ''}>
+            <span>${isVisible ? 'Показывается' : 'Скрыт'}</span>
+          </label>
+        </div>
+      </article>`;
+    }).join('');
     els.promoGrid.innerHTML = cards + `
       <button class="promoAdminAdd" type="button" id="promoAddTile" aria-label="Добавить баннер">
         <span class="promoAdminAdd__icon">
@@ -985,6 +1001,8 @@
       headers: { 'x-admin-password': state.password }
     });
     state.promotions = Array.isArray(data.items) ? data.items : [];
+    state.promotionsSha = data.sha || '';
+    state.originalPromotionsJson = JSON.stringify(state.promotions, null, 2) + '\n';
     updateStats();
     renderPromotions();
   }
@@ -1101,6 +1119,26 @@
     state.originalPromocodesJson = JSON.stringify({ promocodes: state.promocodes }, null, 2) + '\n';
   }
 
+  async function savePromotions() {
+    const currentPromotions = JSON.stringify(state.promotions, null, 2) + '\n';
+    if (currentPromotions === state.originalPromotionsJson) return;
+    const data = await fetchJson(`${workerUrl}/api/promos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': state.password
+      },
+      body: JSON.stringify({
+        items: state.promotions,
+        sha: state.promotionsSha,
+        message: `Update promotions from admin panel ${new Date().toISOString()}`
+      })
+    });
+    state.promotionsSha = data.sha || state.promotionsSha;
+    state.originalPromotionsJson = JSON.stringify(state.promotions, null, 2) + '\n';
+  }
+
+
   async function saveMenu() {
     const currentMenu = JSON.stringify(state.menu, null, 2) + '\n';
     if (currentMenu === state.originalMenuJson) return;
@@ -1168,6 +1206,7 @@
     try {
       await saveMenu();
       await savePromocodes();
+      await savePromotions();
       await saveDeliveryZones();
       updateStats();
       setBadge(els.repoStatus, 'Сохранено в GitHub', 'isOk');
@@ -1184,6 +1223,8 @@
     state.menu = [];
     state.promotions = [];
     state.promocodes = [];
+    state.originalPromotionsJson = '[]\n';
+    state.promotionsSha = '';
     state.sha = '';
     state.promoCodesSha = '';
     state.source = '';
@@ -1257,6 +1298,11 @@
   function bindEvents() {
     els.search?.addEventListener('input', (e) => {
       state.query = e.target.value || '';
+      renderProducts();
+    });
+
+    els.showHiddenToggle?.addEventListener('change', (e) => {
+      state.showHidden = Boolean(e.target.checked);
       renderProducts();
     });
 
