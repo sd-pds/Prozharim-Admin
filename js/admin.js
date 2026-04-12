@@ -454,7 +454,7 @@
 
   function renderTabs() {
     if (!els.tabs) return;
-    const cats = ['Все', ...Array.from(new Set(state.menu.map(item => item.category).filter(Boolean)))];
+    const cats = ['Все', 'Скрытые', ...Array.from(new Set(state.menu.map(item => item.category).filter(Boolean)))];
     els.tabs.innerHTML = '';
     cats.forEach(cat => {
       const btn = document.createElement('button');
@@ -1340,14 +1340,41 @@
 
     els.products?.addEventListener('click', (e) => {
       const editBtn = e.target.closest('[data-edit]');
+      const toggleBtn = e.target.closest('[data-toggle-visible]');
       const deleteBtn = e.target.closest('[data-delete]');
-      if (editBtn) openEditModal(Number(editBtn.dataset.edit));
-      if (deleteBtn) deleteItem(Number(deleteBtn.dataset.delete));
+      if (editBtn) {
+        openEditModal(Number(editBtn.dataset.edit));
+        return;
+      }
+      if (toggleBtn) {
+        const index = Number(toggleBtn.dataset.toggleVisible);
+        if (!Number.isNaN(index) && state.menu[index]) {
+          state.menu[index].visible = state.menu[index].visible === false ? true : false;
+          calcDirty();
+          renderProducts();
+        }
+        return;
+      }
+      if (deleteBtn) {
+        deleteItem(Number(deleteBtn.dataset.delete));
+      }
     });
 
     els.promoGrid?.addEventListener('click', (e) => {
+      const toggleBtn = e.target.closest('[data-toggle-promo-visible]');
       const deleteBtn = e.target.closest('[data-delete-promo]');
-      if (deleteBtn) deletePromotion(deleteBtn.dataset.deletePromo);
+      if (toggleBtn) {
+        const index = Number(toggleBtn.dataset.togglePromoVisible);
+        if (!Number.isNaN(index) && state.promotions[index]) {
+          state.promotions[index].visible = state.promotions[index].visible === false ? true : false;
+          calcDirty();
+          renderPromotions();
+        }
+        return;
+      }
+      if (deleteBtn) {
+        deletePromotion(deleteBtn.dataset.deletePromo);
+      }
     });
 
     els.promoCodeList?.addEventListener('input', (e) => {
