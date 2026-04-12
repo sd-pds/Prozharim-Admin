@@ -41,8 +41,8 @@
         <button class="iconBtn" id="authBtn" type="button" title="Ввести пароль" aria-label="Ввести пароль">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h-1V6a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 8.73V17a1 1 0 1 0 2 0v-.27a2 2 0 1 0-2 0ZM10 8V6a2 2 0 1 1 4 0v2h-4Z"/></svg>
         </button>
-        <button class="iconBtn mobileMenuBtn" id="mobileMenuBtn" type="button" title="Меню" aria-label="Меню">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        <button class="iconBtn iconBtn--accent" id="saveBtn" type="button" title="Сохранить" aria-label="Сохранить">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4ZM7 5h8v4H7V5Zm12 14H5V5h1v6h10V5h.17L19 7.83V19Zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
         </button>
       </div>
     </div>
@@ -242,27 +242,5 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
-  <button class="floatingSaveBtn" id="saveBtn" type="button" aria-label="Сохранить">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4ZM7 5h8v4H7V5Zm12 14H5V5h1v6h10V5h.17L19 7.83V19Zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
-    <span>Сохранить</span>
-  </button>
-
-  <div class="mobileMenuSheet" id="mobileMenuSheet" hidden>
-    <div class="mobileMenuSheet__backdrop" data-mobile-menu-close></div>
-    <div class="mobileMenuSheet__panel">
-      <div class="mobileMenuSheet__head">
-        <div class="mobileMenuSheet__title">Меню панели</div>
-        <button class="drawer__close" type="button" data-mobile-menu-close aria-label="Закрыть">×</button>
-      </div>
-      <nav class="mobileMenuSheet__nav">
-        <a href="#menu" class="mobileMenuSheet__link" data-mobile-nav>Меню</a>
-        <a href="#promotions" class="mobileMenuSheet__link" data-mobile-nav>Акции</a>
-        <a href="#delivery" class="mobileMenuSheet__link" data-mobile-nav>Доставка</a>
-        <a href="#promocodes" class="mobileMenuSheet__link" data-mobile-nav>Промокоды</a>
-        <a href="#orders" class="mobileMenuSheet__link" data-mobile-nav>Заказы</a>
-      </nav>
-    </div>
-  </div>
 </body>
 </html>
