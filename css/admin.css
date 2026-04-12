@@ -694,3 +694,14 @@ body.mobileMenuOpen{
 [data-admin-section][hidden]{
   display:none !important;
 }
+
+
+#reloadBtn{
+  display:none !important;
+}
+.nav__link.isActive,
+.mobileMenuSheet__link.isActive{
+  color:#fff;
+  border-color:rgba(255,106,61,.34);
+  background:rgba(255,106,61,.12);
+}
