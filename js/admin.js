@@ -15,6 +15,8 @@
     modalTitle: document.getElementById('modalTitle'),
     authModal: document.getElementById('authModal'),
     authForm: document.getElementById('authForm'),
+    gateAuthForm: document.getElementById('gateAuthForm'),
+    adminGate: document.getElementById('adminGate'),
     authBtn: document.getElementById('authBtn'),
     saveBtn: document.getElementById('saveBtn'),
     mobileMenuBtn: document.getElementById('mobileMenuBtn'),
@@ -159,6 +161,17 @@
     if (/^https?:\/\//i.test(value)) return value;
     if (!assetBaseUrl) return value.replace(/^\.\//, '');
     return `${assetBaseUrl}/${value.replace(/^\.\//, '').replace(/^\//, '')}`;
+  }
+
+  function updateGateView() {
+    if (!els.adminGate) return;
+    if (state.unlocked) {
+      els.adminGate.setAttribute('hidden', 'hidden');
+      document.body.classList.add('adminUnlocked');
+    } else {
+      els.adminGate.removeAttribute('hidden');
+      document.body.classList.remove('adminUnlocked');
+    }
   }
 
   function updateLockScreen() {
@@ -1081,6 +1094,7 @@
     if (!state.password) {
       state.unlocked = false;
       updateLockScreen();
+    updateGateView();
       renderProducts();
       renderPromotions();
       renderPromocodes();
@@ -1104,6 +1118,7 @@
     state.unlocked = true;
     updateStats();
     updateLockScreen();
+    updateGateView();
     renderProducts();
     renderPromotions();
     renderPromocodes();
@@ -1290,6 +1305,7 @@
     renderDeliveryMap();
     renderOrders();
     updateLockScreen();
+    updateGateView();
     setActiveSection('menu');
     setBadge(els.workerStatus, 'Ожидает авторизацию', 'isWarn');
     setBadge(els.repoStatus, 'Источник: не загружен', 'isWarn');
@@ -1297,7 +1313,8 @@
 
   async function handleAuthSubmit(event) {
     event.preventDefault();
-    const password = String(new FormData(els.authForm).get('password') || '').trim();
+    const formEl = event?.currentTarget || els.authForm;
+    const password = String(new FormData(formEl).get('password') || '').trim();
     if (!password) {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
@@ -1319,11 +1336,17 @@
         loadOrders(state.ordersQuery).catch(() => {});
       }, ordersRefreshMs);
       closeModal('authModal');
+      if (els.gateAuthForm) {
+        const gateInput = els.gateAuthForm.querySelector('input[name="password"]');
+        if (gateInput) gateInput.value = state.password || '';
+      }
+      updateGateView();
       showToast('Пароль принят');
     } catch (error) {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
       resetLockedState();
+      updateGateView();
       const message = String(error?.message || '');
       const isAuthError = /неверный пароль|401|unauthorized/i.test(message);
       setBadge(els.passwordStatus, isAuthError ? 'Неверный пароль' : 'Ошибка загрузки', 'isWarn');
@@ -1456,6 +1479,7 @@
 
     els.productForm?.addEventListener('submit', saveProductFromForm);
     els.authForm?.addEventListener('submit', handleAuthSubmit);
+    els.gateAuthForm?.addEventListener('submit', handleAuthSubmit);
     els.authBtn?.addEventListener('click', () => openModal('authModal'));
     els.saveBtn?.addEventListener('click', saveAll);
     els.addProductBtn?.addEventListener('click', openCreateModal);
@@ -1487,6 +1511,7 @@
     bindEvents();
     resetLockedState();
     setActiveSection('menu');
+    updateGateView();
     if (state.password) loadAll().catch(() => {
       sessionStorage.removeItem(passwordStorageKey);
       state.password = '';
