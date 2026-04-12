@@ -665,3 +665,32 @@ body.mobileMenuOpen{
 .floatingSaveBtn.isSaving span::after{
   content:'...';
 }
+
+
+.adminPreview{
+  align-items:start;
+}
+.adminProductCard__content{
+  width:100%;
+}
+.card__desc{
+  width:100%;
+  max-width:none;
+  min-height:0;
+  line-height:1.45;
+  word-break:break-word;
+}
+.adminProductCard__bottom{
+  align-items:flex-start;
+}
+
+
+.nav__link.isActive,
+.mobileMenuSheet__link.isActive{
+  color:#fff;
+  border-color:rgba(255,106,61,.34);
+  background:rgba(255,106,61,.12);
+}
+[data-admin-section][hidden]{
+  display:none !important;
+}
