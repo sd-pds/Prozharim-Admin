@@ -487,3 +487,49 @@
     justify-content:space-between;
   }
 }
+
+
+.adminMenuToolsRight{
+  display:grid;
+  gap:12px;
+}
+.adminToggleLine{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text);
+  font-size:14px;
+  line-height:1.2;
+  user-select:none;
+}
+.adminToggleLine input{
+  width:18px;
+  height:18px;
+  accent-color: var(--accent);
+}
+.adminToggleLine--head{
+  margin-left:auto;
+}
+.adminToggleLine--compact{
+  color:var(--muted);
+}
+.adminCardActionsWrap{
+  display:grid;
+  gap:10px;
+  justify-items:end;
+}
+.adminProductCard--hidden,
+.promoAdminCard--hidden{
+  opacity:.58;
+}
+.promoAdminCard__footer{
+  display:grid;
+  gap:10px;
+  padding:12px 14px 14px;
+}
+.promoAdminCard__title{
+  color:var(--text);
+  font-size:14px;
+  font-weight:700;
+  line-height:1.3;
+}
