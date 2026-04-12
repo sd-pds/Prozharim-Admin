@@ -30,11 +30,11 @@
       </a>
 
       <nav class="nav">
-        <a href="#menu" class="nav__link">Меню</a>
-        <a href="#promotions" class="nav__link">Акции</a>
-        <a href="#delivery" class="nav__link">Доставка</a>
-        <a href="#promocodes" class="nav__link">Промокоды</a>
-        <a href="#orders" class="nav__link">Заказы</a>
+        <a href="#menu" class="nav__link" data-section-link="menu">Меню</a>
+        <a href="#promotions" class="nav__link" data-section-link="promotions">Акции</a>
+        <a href="#delivery" class="nav__link" data-section-link="delivery">Доставка</a>
+        <a href="#promocodes" class="nav__link" data-section-link="promocodes">Промокоды</a>
+        <a href="#orders" class="nav__link" data-section-link="orders">Заказы</a>
       </nav>
 
       <div class="adminHeaderActions">
@@ -49,7 +49,7 @@
   </header>
 
   <main id="top">
-    <section class="hero hero--admin">
+    <section class="hero hero--admin" data-admin-section="menu">
       <div class="wrap hero__grid hero__grid--single">
         <div class="hero__content">
           <div class="pill">Сытная доставка</div>
@@ -70,7 +70,7 @@
       </div>
     </section>
 
-    <section class="section" id="menu">
+    <section class="section" id="menu" data-admin-section="menu">
       <div class="wrap">
         <div class="section__head">
           <h2 class="section__title">Меню</h2>
@@ -91,7 +91,7 @@
       </div>
     </section>
 
-    <section class="section" id="promotions">
+    <section class="section" id="promotions" data-admin-section="promotions" hidden>
       <div class="wrap">
         <div class="section__head">
           <h2 class="section__title">Акции</h2>
@@ -103,7 +103,7 @@
     </section>
 
 
-    <section class="section" id="delivery">
+    <section class="section" id="delivery" data-admin-section="delivery" hidden>
       <div class="wrap">
         <div class="section__head">
           <h2 class="section__title">Доставка</h2>
@@ -152,7 +152,7 @@
       </div>
     </section>
 
-    <section class="section" id="promocodes">
+    <section class="section" id="promocodes" data-admin-section="promocodes" hidden>
       <div class="wrap">
         <div class="section__head">
           <h2 class="section__title">Промокоды</h2>
@@ -162,7 +162,7 @@
       </div>
     </section>
   
-    <section class="section" id="orders">
+    <section class="section" id="orders" data-admin-section="orders" hidden>
       <div class="wrap">
         <div class="section__head">
           <h2 class="section__title">Заказы</h2>
@@ -256,11 +256,11 @@
         <button class="drawer__close" type="button" data-mobile-menu-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobileMenuSheet__nav">
-        <a href="#menu" class="mobileMenuSheet__link" data-mobile-nav>Меню</a>
-        <a href="#promotions" class="mobileMenuSheet__link" data-mobile-nav>Акции</a>
-        <a href="#delivery" class="mobileMenuSheet__link" data-mobile-nav>Доставка</a>
-        <a href="#promocodes" class="mobileMenuSheet__link" data-mobile-nav>Промокоды</a>
-        <a href="#orders" class="mobileMenuSheet__link" data-mobile-nav>Заказы</a>
+        <a href="#menu" class="mobileMenuSheet__link" data-mobile-nav data-section-link="menu">Меню</a>
+        <a href="#promotions" class="mobileMenuSheet__link" data-mobile-nav data-section-link="promotions">Акции</a>
+        <a href="#delivery" class="mobileMenuSheet__link" data-mobile-nav data-section-link="delivery">Доставка</a>
+        <a href="#promocodes" class="mobileMenuSheet__link" data-mobile-nav data-section-link="promocodes">Промокоды</a>
+        <a href="#orders" class="mobileMenuSheet__link" data-mobile-nav data-section-link="orders">Заказы</a>
       </nav>
     </div>
   </div>
