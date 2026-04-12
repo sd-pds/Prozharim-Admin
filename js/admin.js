@@ -158,6 +158,7 @@
     state.dirty = currentMenu !== state.originalMenuJson || currentCodes !== state.originalPromocodesJson || currentPromotions !== state.originalPromotionsJson || currentZonesDay !== state.originalZonesDayJson || currentZonesNight !== state.originalZonesNightJson;
     if (els.statChanged) els.statChanged.textContent = state.dirty ? '1+' : '0';
     if (els.saveBtn) els.saveBtn.classList.toggle('isShown', !!state.dirty);
+    if (els.saveBtn) els.saveBtn.classList.toggle('isShown', !!state.dirty);
     if (els.statOrders) els.statOrders.textContent = state.ordersTotal || 0;
     document.title = `${state.dirty ? '❗️ НЕ СОХРАНЕНО ' : ''}ПРОЖАРИМ — панель управления меню`;
   }
