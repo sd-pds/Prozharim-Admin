@@ -1223,7 +1223,10 @@
       showToast('Не настроен workerUrl', true);
       return;
     }
+
     els.saveBtn.disabled = true;
+    els.saveBtn.classList.add('isSaving');
+
     try {
       await saveMenu();
       await savePromocodes();
@@ -1236,6 +1239,7 @@
       showToast(error.message || 'Ошибка сохранения', true);
     } finally {
       els.saveBtn.disabled = false;
+      els.saveBtn.classList.remove('isSaving');
     }
   }
 
