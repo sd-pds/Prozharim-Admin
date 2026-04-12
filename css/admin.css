@@ -619,3 +619,49 @@
 body.mobileMenuOpen{
   overflow:hidden;
 }
+
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:86px;
+  transform:translate(-50%, 12px);
+  min-width:min(520px, calc(100vw - 28px));
+  max-width:min(520px, calc(100vw - 28px));
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,12,.96);
+  color:var(--text);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(16px);
+  z-index:95;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+  text-align:center;
+  line-height:1.4;
+}
+.toast.isShown{
+  opacity:1;
+  pointer-events:auto;
+  transform:translate(-50%, 0);
+}
+
+
+.floatingSaveBtn{
+  transition:opacity .18s ease, transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.floatingSaveBtn:active{
+  transform:translate(-50%, 1px) scale(.985);
+}
+.floatingSaveBtn.isSaving{
+  opacity:1;
+  pointer-events:none;
+  transform:translate(-50%, 0) scale(.98);
+  filter:saturate(.9) brightness(.96);
+  box-shadow:0 10px 28px rgba(0,0,0,.28);
+}
+.floatingSaveBtn.isSaving span::after{
+  content:'...';
+}
