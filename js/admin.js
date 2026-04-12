@@ -1230,7 +1230,7 @@
       await saveDeliveryZones();
       updateStats();
       setBadge(els.repoStatus, 'Сохранено в GitHub', 'isOk');
-      showToast('Изменения отправлены в GitHub');
+      showToast('Изменения сохранены. Обновление займёт не более 5 минут.');
     } catch (error) {
       showToast(error.message || 'Ошибка сохранения', true);
     } finally {
